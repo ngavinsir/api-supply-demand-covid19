@@ -15,9 +15,14 @@ type HasCreateNewUser interface {
 	CreateNewUser(ctx context.Context, user *models.User) (*models.User, error)
 }
 
-// HasGetUser handles user retrieval.
-type HasGetUser interface {
-	GetUser(ctx context.Context, email string) (*models.User, error)
+// HasGetUserByEmail handles user retrieval by email given.
+type HasGetUserByEmail interface {
+	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
+}
+
+// HasGetUserByID handles user retrieval by user id given.
+type HasGetUserByID interface {
+	GetUserByID(ctx context.Context, userID string) (*models.User, error)
 }
 
 // UserDatastore holds db information.
@@ -44,7 +49,12 @@ func hashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-// GetUser returns user by given email.
-func (db *UserDatastore) GetUser(ctx context.Context, email string) (*models.User, error) {
+// GetUserByEmail returns user by given email.
+func (db *UserDatastore) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	return models.Users(models.UserWhere.Email.EQ(email)).One(ctx, db)
+}
+
+// GetUserByID returns user by given user id.
+func (db *UserDatastore) GetUserByID(ctx context.Context, userID string) (*models.User, error) {
+	return models.Users(models.UserWhere.ID.EQ(userID)).One(ctx, db)
 }
