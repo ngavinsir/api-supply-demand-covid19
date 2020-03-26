@@ -16,6 +16,7 @@ services:
      - db
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres?sslmode=disable
+      - JWT_SECRET=sample-jwt-secret
     ports:
       - "4040:4040"
 
