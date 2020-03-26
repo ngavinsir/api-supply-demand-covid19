@@ -186,7 +186,7 @@ type LoginRequest struct {
 
 // Bind LoginRequest (Username, Password) [Required]
 func (req *LoginRequest) Bind(r *http.Request) error {
-	if req.Email == "" || req.Password == "" {
+	if req.User == nil || req.Email == "" || req.Password == "" {
 		return errors.New(ErrMissingReqFields)
 	}
 
