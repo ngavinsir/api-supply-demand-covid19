@@ -169,7 +169,7 @@ type RegisterRequest struct {
 
 // Bind RegisterRequest (Username, Password) [Required]
 func (req *RegisterRequest) Bind(r *http.Request) error {
-	if req.Email == "" || req.Password == "" || req.Name == "" {
+	if req.Email == "" || req.Password == "" || req.Name == "" || req.Role == "" {
 		return errors.New(ErrMissingReqFields)
 	}
 
