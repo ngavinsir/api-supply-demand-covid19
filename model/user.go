@@ -31,11 +31,18 @@ type UserDatastore struct {
 }
 
 // CreateNewUser creates a new user with given username and password.
-func (db *UserDatastore) CreateNewUser(ctx context.Context, user *models.User) (*models.User, error) {
-	hash, _ := hashPassword(user.Password)
+func (db *UserDatastore) CreateNewUser(ctx context.Context, data *models.User) (*models.User, error) {
+	hash, _ := hashPassword(data.Password)
 	
-	user.ID = ksuid.New().String()
-	user.Password = hash
+	user := &models.User {
+		ID: ksuid.New().String(),
+		Password: hash,
+		Role: data.Role,
+		ContactNumber: data.ContactNumber,
+		ContactPerson: data.ContactPerson,
+		Email: data.Email,
+		Name: data.Name,
+	}
 
 	if err := user.Insert(ctx, db, boil.Infer()); err != nil {
 		return nil, err
