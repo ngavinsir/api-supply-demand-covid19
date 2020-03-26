@@ -12,12 +12,12 @@ import (
 
 // HasCreateNewUser handles new user creation.
 type HasCreateNewUser interface {
-	CreateNewUser(ctx context.Context, data *models.User) (*models.User, error)
+	CreateNewUser(ctx context.Context, user *models.User) (*models.User, error)
 }
 
 // HasGetUser handles user retrieval.
 type HasGetUser interface {
-	GetUser(ctx context.Context, username string) (*models.User, error)
+	GetUser(ctx context.Context, email string) (*models.User, error)
 }
 
 // UserDatastore holds db information.
