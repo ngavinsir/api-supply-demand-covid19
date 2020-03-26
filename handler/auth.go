@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
+	"github.com/joho/godotenv"
 	"github.com/ngavinsir/api-supply-demand-covid19/model"
 	"github.com/ngavinsir/api-supply-demand-covid19/models"
 	"golang.org/x/crypto/bcrypt"
@@ -27,6 +28,8 @@ var UserCtxKey = &contextKey{"User_id"}
 var jwtAuth *jwtauth.JWTAuth
 
 func init() {
+	godotenv.Load()
+
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		panic(errors.New("env JWT_SECRET not provided"))

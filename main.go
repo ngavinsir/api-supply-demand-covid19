@@ -30,6 +30,6 @@ func main() {
 		port = ":" + envPort
 	}
 
-	log.Fatal(http.ListenAndServe(port, router))
 	log.Printf("Server started on %s", port)
+	log.Fatal(http.ListenAndServe(port, router))
 }

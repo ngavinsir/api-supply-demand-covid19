@@ -11,6 +11,7 @@ require (
 	github.com/go-chi/jwtauth v4.0.4+incompatible
 	github.com/go-chi/render v1.0.1
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
+	github.com/joho/godotenv v1.3.0
 	github.com/lib/pq v1.3.0
 	github.com/mitchellh/mapstructure v1.2.2 // indirect
 	github.com/pelletier/go-toml v1.6.0 // indirect
