@@ -111,11 +111,11 @@ func loginLogic(ctx context.Context, repo model.HasGetUserByEmail, data *models.
 	_, tokenString, _ := jwtAuth.Encode(jwtClaims)
 	
 	loginResponse := &LoginResponse{
-		Email: data.Email,
-		Name:  data.Name,
-		Role: data.Role,
-		ContactPerson: data.ContactPerson.String,
-		ContactNumber: data.ContactNumber.String,
+		Email: user.Email,
+		Name:  user.Name,
+		Role: user.Role,
+		ContactPerson: user.ContactPerson.String,
+		ContactNumber: user.ContactNumber.String,
 		JWT: tokenString,
 	}
 
