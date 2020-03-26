@@ -15,7 +15,7 @@ go run main.go
 Or if you don't have go installed, you can launch both the database and the server with docker compose
 
 ```
-docker compose up
+docker-compose up --build
 ```
 
 ### Testing
