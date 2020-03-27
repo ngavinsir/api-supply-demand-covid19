@@ -7,6 +7,7 @@ import (
 	"github.com/ericlagergren/decimal"
 	"github.com/ngavinsir/api-supply-demand-covid19/database"
 	"github.com/ngavinsir/api-supply-demand-covid19/models"
+	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/types"
 )
 
@@ -14,6 +15,7 @@ const (
 	testStockID     = "ID"
 	testStockItemID = "ItemID"
 	testStockUnitID = "UnitID"
+	testStockLen    = 10
 )
 
 func TestStock(t *testing.T) {
@@ -32,18 +34,37 @@ func TestStock(t *testing.T) {
 
 func testCreateStock(repo *StockDataStore) func(t *testing.T) {
 	return func(t *testing.T) {
-		stock, err := repo.CreateNewStock(context.Background(), &models.Stock{
-			ID:       testStockID,
-			ItemID:   testStockItemID,
-			UnitID:   testStockUnitID,
-			Quantity: types.NewNullDecimal(decimal.New(0, 0)),
-		})
-		if err != nil {
-			t.Error(err)
+		var quantity types.Decimal
+		quantity.Big, _ = new(decimal.Big).SetString("1.5")
+
+		item := &models.Item{
+			ID:   testStockItemID,
+			Name: "name",
 		}
 
-		if stock.ID == "" {
-			t.Errorf("Want stock id assigned, got %s", stock.ID)
+		item.Insert(context.Background(), repo, boil.Infer())
+
+		unit := &models.Unit{
+			ID:   testStockUnitID,
+			Name: "name",
+		}
+
+		unit.Insert(context.Background(), repo, boil.Infer())
+
+		for i := 0; i < testStockLen; i++ {
+			stock, err := repo.CreateNewStock(context.Background(), &models.Stock{
+				ItemID:   testStockItemID,
+				UnitID:   testStockUnitID,
+				Quantity: types.NewDecimal(&decimal.Big{}),
+			})
+
+			if err != nil {
+				t.Error(err)
+			}
+
+			if stock.ID == "" {
+				t.Errorf("Want stock id assigned, got %s", stock.ID)
+			}
 		}
 
 		t.Run("Get all stock", testGetAllStock(repo))
@@ -57,8 +78,8 @@ func testGetAllStock(repo *StockDataStore) func(t *testing.T) {
 			t.Error(err)
 		}
 
-		if got, want := stocks[0].ID, testStockID; got != want {
-			t.Errorf("Want stock id %s, got %s", want, got)
+		if len(stocks) != testStockLen {
+			t.Errorf("Want stock count %d, got %d", testStockLen, len(stocks))
 		}
 	}
 }
