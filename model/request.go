@@ -8,11 +8,17 @@ import (
 	"github.com/ngavinsir/api-supply-demand-covid19/models"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/boil"
+	. "github.com/volatiletech/sqlboiler/queries/qm"
 )
 
 // HasCreateRequest handles new request creation.
 type HasCreateRequest interface {
 	CreateRequest(ctx context.Context, requestItems []*models.RequestItem, applicantID string) (*models.Request, error)
+}
+
+// HasGetAllRequest handles requests retrieval.
+type HasGetAllRequest interface {
+	GetAllRequest(ctx context.Context) (*models.RequestSlice, error)
 }
 
 // RequestDatastore holds db information.
@@ -58,4 +64,17 @@ func (db *RequestDatastore) CreateRequest(
 	}
 
 	return request, nil
+}
+
+// GetAllRequest gets all requests.
+func (db *RequestDatastore) GetAllRequest(ctx context.Context) (*models.RequestSlice, error) {
+	requests, err := models.Requests(
+		Load(models.RequestRels.RequestItems),
+		Load(models.RequestRels.DonationApplicant),
+	).All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+	
+	return &requests, nil
 }
