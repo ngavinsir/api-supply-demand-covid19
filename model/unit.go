@@ -14,6 +14,11 @@ type HasCreateUnit interface {
 	CreateUnit(ctx context.Context, name string) (*models.Unit, error)
 }
 
+// HasGetAllUnit handles units retrieval.
+type HasGetAllUnit interface {
+	GetAllUnit(ctx context.Context) (*models.UnitSlice, error)
+}
+
 // UnitDatastore holds db information.
 type UnitDatastore struct {
 	*sql.DB
@@ -31,4 +36,14 @@ func (db *UnitDatastore) CreateUnit(ctx context.Context, name string) (*models.U
 	}
 
 	return unit, nil
+}
+
+// GetAllUnit gets all unit.
+func (db *UnitDatastore) GetAllUnit(ctx context.Context) (*models.UnitSlice, error) {
+	units, err := models.Units().All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+
+	return &units, nil
 }
