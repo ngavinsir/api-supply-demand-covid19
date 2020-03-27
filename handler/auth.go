@@ -183,6 +183,7 @@ func UserCtx(repo interface {model.HasGetUserByID}) func(http.Handler) http.Hand
 			user, err := repo.GetUserByID(r.Context(), userID)
 			if err != nil {
 				render.Render(w, r, ErrRender(err))
+				return
 			}
 
 			ctx := context.WithValue(r.Context(), UserCtxKey, user)
