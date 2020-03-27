@@ -10,6 +10,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// User role enum
+const (
+	RoleDonator = "DONATOR"
+	RoleApplicant = "APPLICANT"
+	RoleAdmin = "ADMIN"
+)
+
 // HasCreateNewUser handles new user creation.
 type HasCreateNewUser interface {
 	CreateNewUser(ctx context.Context, user *models.User) (*models.User, error)

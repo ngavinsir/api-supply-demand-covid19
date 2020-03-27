@@ -12,7 +12,7 @@ import (
 
 // HasCreateRequest handles new request creation.
 type HasCreateRequest interface {
-	CreateRequest(ctx context.Context, items []*models.RequestItem) (*models.Request, error)
+	CreateRequest(ctx context.Context, requestItems []*models.RequestItem, applicantID string) (*models.Request, error)
 }
 
 // RequestDatastore holds db information.
