@@ -22,8 +22,11 @@ type AuthResource struct {
 	*model.UserDatastore
 }
 
-// UserCtxKey extracts user information from context.
-var UserCtxKey = &contextKey{"User_id"}
+// Common ctx key.
+var (
+	UserIDCtxKey = &contextKey{"User_id"}
+	UserCtxKey = &contextKey{"User"}
+)
 
 var jwtAuth *jwtauth.JWTAuth
 
@@ -42,12 +45,7 @@ func (store *AuthResource) router() *chi.Mux {
 
 	r.Post("/login", Login(store))
 	r.Post("/register", Register(store))
-
-	r.Group(func(r chi.Router) {
-		r.Use(AuthMiddleware)
-
-		r.Post("/refresh", RefreshToken)
-	})
+	r.With(AuthMiddleware).Post("/refresh", RefreshToken)
 	
 	return r
 }
@@ -155,34 +153,38 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 // AuthMiddleware to handle request jwt token
 func AuthMiddleware(next http.Handler) http.Handler {
-	return jwtauth.Verifier(jwtAuth)(next)
+	return jwtauth.Verifier(jwtAuth)(extractUserID(next))
+}
+
+func extractUserID(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, claims, err := jwtauth.FromContext(r.Context())
+
+		if err != nil {
+			render.Render(w, r, ErrUnauthorized(err))
+			return
+		}
+
+		if token == nil || !token.Valid || claims["user_id"] == nil {
+			render.Render(w, r, ErrUnauthorized(errors.New("token is invalid")))
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), UserIDCtxKey, claims["user_id"])
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 // UserCtx middleware is used to extract user information from jwt.
 func UserCtx(repo interface {model.HasGetUserByID}) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token, claims, err := jwtauth.FromContext(r.Context())
-	
-			if err != nil {
-				render.Render(w, r, ErrUnauthorized(err))
-				return
-			}
-	
-			if token == nil || !token.Valid {
-				render.Render(w, r, ErrUnauthorized(errors.New("token is invalid")))
-				return
-			}
-			
-			userID, ok := claims["user_id"].(string)
-			if !ok {
-				http.Error(w, http.StatusText(401), 401)
-				return
-			}
+			userID, _ := r.Context().Value(UserIDCtxKey).(string)
 
 			user, err := repo.GetUserByID(r.Context(), userID)
 			if err != nil {
 				render.Render(w, r, ErrRender(err))
+				return
 			}
 
 			ctx := context.WithValue(r.Context(), UserCtxKey, user)
@@ -199,7 +201,7 @@ type RegisterRequest struct {
 // Bind RegisterRequest (Username, Password) [Required]
 func (req *RegisterRequest) Bind(r *http.Request) error {
 	if req.User == nil || req.Email == "" || req.Password == "" || req.Name == "" || req.Role == "" {
-		return errors.New(ErrMissingReqFields)
+		return ErrMissingReqFields
 	}
 
 	return nil
@@ -213,7 +215,7 @@ type LoginRequest struct {
 // Bind LoginRequest (Username, Password) [Required]
 func (req *LoginRequest) Bind(r *http.Request) error {
 	if req.User == nil || req.Email == "" || req.Password == "" {
-		return errors.New(ErrMissingReqFields)
+		return ErrMissingReqFields
 	}
 
 	return nil

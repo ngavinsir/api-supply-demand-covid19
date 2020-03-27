@@ -27,16 +27,16 @@ func ResetTestDB(db *sql.DB) error {
 		return err
 	}
 
-	models.Users().DeleteAll(context.Background(), tx)
+	models.AllocationItems().DeleteAll(context.Background(), tx)
+	models.Allocations().DeleteAll(context.Background(), tx)
+	models.DonationItems().DeleteAll(context.Background(), tx)
+	models.Stocks().DeleteAll(context.Background(), tx)
+	models.RequestItems().DeleteAll(context.Background(), tx)
 	models.Donations().DeleteAll(context.Background(), tx)
 	models.Items().DeleteAll(context.Background(), tx)
 	models.Units().DeleteAll(context.Background(), tx)
 	models.Requests().DeleteAll(context.Background(), tx)
-	models.Allocations().DeleteAll(context.Background(), tx)
-	models.RequestItems().DeleteAll(context.Background(), tx)
-	models.Stocks().DeleteAll(context.Background(), tx)
-	models.DonationItems().DeleteAll(context.Background(), tx)
-	models.AllocationItems().DeleteAll(context.Background(), tx)
+	models.Users().DeleteAll(context.Background(), tx)
 
 	err = tx.Commit()
 	return err

@@ -10,6 +10,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// User role enum
+const (
+	RoleDonator = "DONATOR"
+	RoleApplicant = "APPLICANT"
+	RoleAdmin = "ADMIN"
+)
+
 // HasCreateNewUser handles new user creation.
 type HasCreateNewUser interface {
 	CreateNewUser(ctx context.Context, user *models.User) (*models.User, error)
@@ -33,15 +40,15 @@ type UserDatastore struct {
 // CreateNewUser creates a new user with given username and password.
 func (db *UserDatastore) CreateNewUser(ctx context.Context, data *models.User) (*models.User, error) {
 	hash, _ := hashPassword(data.Password)
-	
-	user := &models.User {
-		ID: ksuid.New().String(),
-		Password: hash,
-		Role: data.Role,
+
+	user := &models.User{
+		ID:            ksuid.New().String(),
+		Password:      hash,
+		Role:          data.Role,
 		ContactNumber: data.ContactNumber,
 		ContactPerson: data.ContactPerson,
-		Email: data.Email,
-		Name: data.Name,
+		Email:         data.Email,
+		Name:          data.Name,
 	}
 
 	if err := user.Insert(ctx, db, boil.Infer()); err != nil {

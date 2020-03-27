@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/ericlagergren/decimal v0.0.0-20191206042408-88212e6cfca9 // indirect
+	github.com/ericlagergren/decimal v0.0.0-20181231230500-73749d4874d5
 	github.com/friendsofgo/errors v0.9.2
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-chi/chi v4.0.4+incompatible
@@ -12,6 +12,7 @@ require (
 	github.com/go-chi/render v1.0.1
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/joho/godotenv v1.3.0
+	github.com/kat-co/vala v0.0.0-20170210184112-42e1d8b61f12
 	github.com/lib/pq v1.3.0
 	github.com/mitchellh/mapstructure v1.2.2 // indirect
 	github.com/pelletier/go-toml v1.6.0 // indirect
