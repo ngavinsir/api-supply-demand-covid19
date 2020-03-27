@@ -42,7 +42,7 @@ func (store *AuthResource) router() *chi.Mux {
 
 	r.Post("/login", Login(store))
 	r.Post("/register", Register(store))
-	
+
 	return r
 }
 
@@ -75,7 +75,7 @@ func Register(repo interface {
 }
 
 // Login handler
-func Login(repo interface {model.HasGetUserByEmail}) http.HandlerFunc {
+func Login(repo interface{ model.HasGetUserByEmail }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := &LoginRequest{}
 		if err := render.Bind(r, data); err != nil {
@@ -109,14 +109,14 @@ func loginLogic(ctx context.Context, repo model.HasGetUserByEmail, data *models.
 	jwtClaims["exp"] = jwtauth.ExpireIn(3 * time.Hour)
 
 	_, tokenString, _ := jwtAuth.Encode(jwtClaims)
-	
+
 	loginResponse := &LoginResponse{
-		Email: user.Email,
-		Name:  user.Name,
-		Role: user.Role,
+		Email:         user.Email,
+		Name:          user.Name,
+		Role:          user.Role,
 		ContactPerson: user.ContactPerson.String,
 		ContactNumber: user.ContactNumber.String,
-		JWT: tokenString,
+		JWT:           tokenString,
 	}
 
 	return loginResponse, nil
@@ -133,21 +133,21 @@ func AuthMiddleware(next http.Handler) http.Handler {
 }
 
 // UserCtx middleware is used to extract user information from jwt.
-func UserCtx(repo interface {model.HasGetUserByID}) func(http.Handler) http.Handler {
+func UserCtx(repo interface{ model.HasGetUserByID }) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, claims, err := jwtauth.FromContext(r.Context())
-	
+
 			if err != nil {
 				http.Error(w, http.StatusText(401), 401)
 				return
 			}
-	
+
 			if token == nil || !token.Valid {
 				http.Error(w, http.StatusText(401), 401)
 				return
 			}
-			
+
 			userID, ok := claims["user_id"].(string)
 			if !ok {
 				http.Error(w, http.StatusText(401), 401)
