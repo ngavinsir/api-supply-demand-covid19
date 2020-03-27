@@ -70,8 +70,8 @@ func (db *StockDataStore) CreateNewStock(ctx context.Context, data *models.Stock
 
 // StockData struct
 type StockData struct {
-	ID       string            `boil:"id" json:"id"`
-	Name     string            `boil:"name" json:"name"`
-	Unit     string            `boil:"unit" json:"unit"`
-	Quantity types.NullDecimal `boil:"quantity" json:"int"`
+	ID       string        `boil:"id" json:"id"`
+	Name     string        `boil:"name" json:"name"`
+	Unit     string        `boil:"unit" json:"unit"`
+	Quantity types.Decimal `boil:"quantity" json:"int"`
 }
