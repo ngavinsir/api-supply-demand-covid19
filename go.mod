@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/ericlagergren/decimal v0.0.0-20191206042408-88212e6cfca9 // indirect
+	github.com/ericlagergren/decimal v0.0.0-20191206042408-88212e6cfca9
 	github.com/friendsofgo/errors v0.9.2
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-chi/chi v4.0.4+incompatible
@@ -18,6 +18,7 @@ require (
 	github.com/segmentio/ksuid v1.0.2
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
+	github.com/spf13/cobra v0.0.6 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.6.2
