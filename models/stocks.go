@@ -24,10 +24,10 @@ import (
 
 // Stock is an object representing the database table.
 type Stock struct {
-	ID       string            `boil:"id" json:"id" toml:"id" yaml:"id"`
-	ItemID   string            `boil:"item_id" json:"item_id" toml:"item_id" yaml:"item_id"`
-	UnitID   string            `boil:"unit_id" json:"unit_id" toml:"unit_id" yaml:"unit_id"`
-	Quantity types.NullDecimal `boil:"quantity" json:"quantity,omitempty" toml:"quantity" yaml:"quantity,omitempty"`
+	ID       string        `boil:"id" json:"id" toml:"id" yaml:"id"`
+	ItemID   string        `boil:"item_id" json:"item_id" toml:"item_id" yaml:"item_id"`
+	UnitID   string        `boil:"unit_id" json:"unit_id" toml:"unit_id" yaml:"unit_id"`
+	Quantity types.Decimal `boil:"quantity" json:"quantity" toml:"quantity" yaml:"quantity"`
 
 	R *stockR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L stockL  `boil:"-" json:"-" toml:"-" yaml:"-"`
@@ -47,41 +47,16 @@ var StockColumns = struct {
 
 // Generated where
 
-type whereHelpertypes_NullDecimal struct{ field string }
-
-func (w whereHelpertypes_NullDecimal) EQ(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, false, x)
-}
-func (w whereHelpertypes_NullDecimal) NEQ(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.WhereNullEQ(w.field, true, x)
-}
-func (w whereHelpertypes_NullDecimal) IsNull() qm.QueryMod { return qmhelper.WhereIsNull(w.field) }
-func (w whereHelpertypes_NullDecimal) IsNotNull() qm.QueryMod {
-	return qmhelper.WhereIsNotNull(w.field)
-}
-func (w whereHelpertypes_NullDecimal) LT(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LT, x)
-}
-func (w whereHelpertypes_NullDecimal) LTE(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.LTE, x)
-}
-func (w whereHelpertypes_NullDecimal) GT(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GT, x)
-}
-func (w whereHelpertypes_NullDecimal) GTE(x types.NullDecimal) qm.QueryMod {
-	return qmhelper.Where(w.field, qmhelper.GTE, x)
-}
-
 var StockWhere = struct {
 	ID       whereHelperstring
 	ItemID   whereHelperstring
 	UnitID   whereHelperstring
-	Quantity whereHelpertypes_NullDecimal
+	Quantity whereHelpertypes_Decimal
 }{
 	ID:       whereHelperstring{field: "\"stocks\".\"id\""},
 	ItemID:   whereHelperstring{field: "\"stocks\".\"item_id\""},
 	UnitID:   whereHelperstring{field: "\"stocks\".\"unit_id\""},
-	Quantity: whereHelpertypes_NullDecimal{field: "\"stocks\".\"quantity\""},
+	Quantity: whereHelpertypes_Decimal{field: "\"stocks\".\"quantity\""},
 }
 
 // StockRels is where relationship names are stored.
