@@ -296,10 +296,11 @@ func (req *LoginRequest) Bind(r *http.Request) error {
 
 // LoginResponse struct
 type LoginResponse struct {
+	ID			  string `boil:"id" json:"id,omitempty"`
 	Email         string `boil:"email" json:"email"`
 	Name          string `boil:"name" json:"name"`
 	Role          string `boil:"role" json:"role"`
 	ContactPerson string `boil:"contact_person" json:"contactPerson,omitempty"`
 	ContactNumber string `boil:"contact_number" json:"contactNumber,omitempty"`
-	JWT           string `json:"jwt"`
+	JWT           string `json:"jwt,omitempty"`
 }
