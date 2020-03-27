@@ -39,7 +39,7 @@ create table if not exists stocks
 		constraint stocks_units_id_fk
 			references units
 				on delete restrict,
-	quantity numeric(12,2)
+	quantity numeric(12,2) not null
 );
 
 alter table stocks owner to postgres;
@@ -58,6 +58,9 @@ create table if not exists users
 );
 
 alter table users owner to postgres;
+
+create unique index if not exists users_email_uindex
+	on users (email);
 
 create table if not exists donations
 (
@@ -174,7 +177,3 @@ create table if not exists allocation_items
 );
 
 alter table allocation_items owner to postgres;
-
-create unique index if not exists users_email_uindex
-	on users (email);
-
