@@ -1,15 +1,17 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/render"
 )
 
 // common error message
-const (
-	ErrInvalidUserID    = "INVALID_USER_ID"
-	ErrMissingReqFields = "MISSING_REQUEST_FIELDS"
+var (
+	ErrInvalidUserID    = errors.New("INVALID_USER_ID")
+	ErrMissingReqFields = errors.New("MISSING_REQUEST_FIELDS")
+	ErrInvalidRole		= errors.New("INVALID_ROLE")
 )
 
 // ErrResponse contains err, http_status_code, status_text, app_code, error_text

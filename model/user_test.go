@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	testEmail = "TEST_EMAIL"
+	testEmail    = "TEST_EMAIL"
 	testPassword = "TEST_PASSWORD"
 )
 
@@ -30,10 +30,10 @@ func TestUser(t *testing.T) {
 func testCreateUser(repo *UserDatastore) func(t *testing.T) {
 	return func(t *testing.T) {
 		user, err := repo.CreateNewUser(context.Background(), &models.User{
-			Email: testEmail,
+			Email:    testEmail,
 			Password: testPassword,
-			Name: "TEST_NAME",
-			Role: "TEST_ROLE",
+			Name:     "TEST_NAME",
+			Role:     "TEST_ROLE",
 		})
 		if err != nil {
 			t.Error(err)

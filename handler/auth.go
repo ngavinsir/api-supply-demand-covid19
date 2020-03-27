@@ -183,6 +183,7 @@ func UserCtx(repo interface {model.HasGetUserByID}) func(http.Handler) http.Hand
 			user, err := repo.GetUserByID(r.Context(), userID)
 			if err != nil {
 				render.Render(w, r, ErrRender(err))
+				return
 			}
 
 			ctx := context.WithValue(r.Context(), UserCtxKey, user)
@@ -199,7 +200,7 @@ type RegisterRequest struct {
 // Bind RegisterRequest (Username, Password) [Required]
 func (req *RegisterRequest) Bind(r *http.Request) error {
 	if req.User == nil || req.Email == "" || req.Password == "" || req.Name == "" || req.Role == "" {
-		return errors.New(ErrMissingReqFields)
+		return ErrMissingReqFields
 	}
 
 	return nil
@@ -213,7 +214,7 @@ type LoginRequest struct {
 // Bind LoginRequest (Username, Password) [Required]
 func (req *LoginRequest) Bind(r *http.Request) error {
 	if req.User == nil || req.Email == "" || req.Password == "" {
-		return errors.New(ErrMissingReqFields)
+		return ErrMissingReqFields
 	}
 
 	return nil
