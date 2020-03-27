@@ -42,6 +42,12 @@ func (store *AuthResource) router() *chi.Mux {
 
 	r.Post("/login", Login(store))
 	r.Post("/register", Register(store))
+
+	r.Group(func(r chi.Router) {
+		r.Use(AuthMiddleware)
+
+		r.Post("/refresh", RefreshToken)
+	})
 	
 	return r
 }
@@ -127,6 +133,26 @@ func checkPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
+// RefreshToken refreshes jwt token.
+func RefreshToken(w http.ResponseWriter, r *http.Request) {
+	token, claims, err := jwtauth.FromContext(r.Context())
+
+	if err != nil {
+		render.Render(w, r, ErrUnauthorized(err))
+		return
+	}
+
+	if token == nil || !token.Valid {
+		render.Render(w, r, ErrUnauthorized(errors.New("token is invalid")))
+		return
+	}
+
+	claims["exp"] = jwtauth.ExpireIn(3 * time.Hour)
+	_, tokenString, _ := jwtAuth.Encode(claims)
+
+	render.PlainText(w, r, tokenString)
+}
+
 // AuthMiddleware to handle request jwt token
 func AuthMiddleware(next http.Handler) http.Handler {
 	return jwtauth.Verifier(jwtAuth)(next)
@@ -139,12 +165,12 @@ func UserCtx(repo interface {model.HasGetUserByID}) func(http.Handler) http.Hand
 			token, claims, err := jwtauth.FromContext(r.Context())
 	
 			if err != nil {
-				http.Error(w, http.StatusText(401), 401)
+				render.Render(w, r, ErrUnauthorized(err))
 				return
 			}
 	
 			if token == nil || !token.Valid {
-				http.Error(w, http.StatusText(401), 401)
+				render.Render(w, r, ErrUnauthorized(errors.New("token is invalid")))
 				return
 			}
 			
