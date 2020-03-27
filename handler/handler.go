@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/ngavinsir/api-supply-demand-covid19/model"
 )
 
@@ -21,7 +22,10 @@ func NewAPI(db *sql.DB) *API {
 	requestDatastore := &model.RequestDatastore{DB: db}
 
 	authResource := &AuthResource{UserDatastore: userDatastore}
-	unitResource := &UnitResource{UnitDatastore: unitDatastore}
+	unitResource := &UnitResource{
+		UnitDatastore: unitDatastore,
+		UserDatastore: userDatastore,
+	}
 	requestResource := &RequestResource{
 		requestDatastore: requestDatastore,
 		userDatastore: userDatastore,
@@ -39,6 +43,10 @@ func NewAPI(db *sql.DB) *API {
 // Router provides application routes.
 func (api *API) Router() *chi.Mux {
 	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
 	r.Mount("/auth", api.authResource.router())
 	r.Mount("/units", api.unitResource.router())
