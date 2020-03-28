@@ -3,11 +3,13 @@ package handler
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/badoux/checkmail"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/jwtauth"
@@ -42,14 +44,33 @@ func init() {
 	jwtAuth = jwtauth.New("HS256", []byte(jwtSecret), nil)
 }
 
-func (store *AuthResource) router() *chi.Mux {
+func (res *AuthResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Post("/login", Login(store))
-	r.Post("/register", Register(store))
+	r.Post("/login", Login(res.UserDatastore))
+	r.Post("/register", Register(res.UserDatastore))
 	r.With(AuthMiddleware).Post("/refresh", RefreshToken)
-
+	
 	return r
+}
+
+func (res *AuthResource) cmd(args []string) {
+	// admin {email} {password}
+	loginResponse, err := registerLogic(
+		context.Background(), 
+		res.UserDatastore,
+		&models.User{
+			Email: args[0],
+			Name: args[0],
+			Password: args[1],
+			Role: model.RoleAdmin,
+		},
+	)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	log.Print(loginResponse)
 }
 
 // Register new user handler
@@ -64,13 +85,12 @@ func Register(repo interface {
 			return
 		}
 
-		_, err := repo.CreateNewUser(r.Context(), data.User)
-		if err != nil {
-			render.Render(w, r, ErrRender(err))
+		if data.User.Role == model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
 			return
 		}
 
-		loginResponse, err := loginLogic(r.Context(), repo, data.User)
+		loginResponse, err := registerLogic(r.Context(), repo, data.User)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
@@ -78,6 +98,28 @@ func Register(repo interface {
 
 		render.JSON(w, r, loginResponse)
 	}
+}
+
+func registerLogic(ctx context.Context, repo interface {
+	model.HasCreateNewUser
+	model.HasGetUserByEmail
+}, data *models.User) (*LoginResponse, error) {
+	err := checkmail.ValidateFormat(data.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = repo.CreateNewUser(ctx, data)
+	if err != nil {
+		return nil, err
+	}
+
+	loginResponse, err := loginLogic(ctx, repo, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return loginResponse, nil
 }
 
 // Login handler
@@ -115,7 +157,7 @@ func loginLogic(ctx context.Context, repo model.HasGetUserByEmail, data *models.
 	jwtClaims["exp"] = jwtauth.ExpireIn(3 * time.Hour)
 
 	_, tokenString, _ := jwtAuth.Encode(jwtClaims)
-
+	
 	loginResponse := &LoginResponse{
 		Email:         user.Email,
 		Name:          user.Name,

@@ -68,6 +68,11 @@ func (api *API) Router() *chi.Mux {
 	return r
 }
 
+// Cmd handles command from terminal.
+func (api *API) Cmd(args []string) {	
+	api.authResource.cmd(args)
+}
+
 type contextKey struct {
 	name string
 }
