@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -26,6 +27,7 @@ type AuthResource struct {
 var (
 	UserIDCtxKey = &contextKey{"User_id"}
 	UserCtxKey   = &contextKey{"User"}
+	PageCtxKey   = &contextKey{"Pagination"}
 )
 
 var jwtAuth *jwtauth.JWTAuth
@@ -191,6 +193,35 @@ func UserCtx(repo interface{ model.HasGetUserByID }) func(http.Handler) http.Han
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// PaginationCtx middleware is used to exctract page and size query param
+func PaginationCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		page, err := strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil || page < 1 {
+			page = 1
+		}
+
+		size, err := strconv.Atoi(r.URL.Query().Get("size"))
+		if err != nil || size < 1 {
+			size = 1
+		}
+
+		paging := &Paging{
+			Page: page,
+			Size: size,
+		}
+
+		ctx := context.WithValue(r.Context(), PageCtxKey, paging)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// Paging struct
+type Paging struct {
+	Page int
+	Size int
 }
 
 // RegisterRequest struct
