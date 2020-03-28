@@ -13,7 +13,7 @@ import (
 
 // HasCreateRequest handles new request creation.
 type HasCreateRequest interface {
-	CreateRequest(ctx context.Context, requestItems []*models.RequestItem, applicantID string) (*models.Request, error)
+	CreateRequest(ctx context.Context, requestItems []*models.RequestItem, applicantID string) (*RequestData, error)
 }
 
 // HasGetAllRequest handles requests retrieval.
