@@ -10,11 +10,11 @@ import (
 
 // API provides application resources and handlers.
 type API struct {
-	authResource *AuthResource
-	unitResource *UnitResource
+	authResource    *AuthResource
+	unitResource    *UnitResource
 	stockResource   *StockResource
 	requestResource *RequestResource
-	itemResource *ItemResource
+	itemResource    *ItemResource
 }
 
 // NewAPI configures and returns application API.
@@ -41,12 +41,11 @@ func NewAPI(db *sql.DB) *API {
 	}
 
 	api := &API{
-		authResource: authResource,
-		unitResource: unitResource,
 		authResource:    authResource,
+		unitResource:    unitResource,
 		stockResource:   stockResource,
 		requestResource: requestResource,
-		itemResource: itemResource,
+		itemResource:    itemResource,
 	}
 
 	return api

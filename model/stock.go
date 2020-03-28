@@ -50,27 +50,22 @@ func (db *StockDataStore) GetAllStock(ctx context.Context, page int, size int) (
 		Last:    isLast,
 	}
 
-	stocks, err := models.Stocks(qm.Offset(offset), qm.Limit(limit)).All(ctx, db)
+	stocks, err := models.Stocks(
+		qm.Offset(offset),
+		qm.Limit(limit),
+		qm.Load(models.StockRels.Item),
+		qm.Load(models.StockRels.Unit),
+	).All(ctx, db)
 	if err != nil {
 		return nil, err
 	}
 
 	stockData := []*StockData{}
 	for _, stock := range stocks {
-		item, err := stock.Item().One(ctx, db)
-		if err != nil {
-			return nil, err
-		}
-
-		unit, err := stock.Unit().One(ctx, db)
-		if err != nil {
-			return nil, err
-		}
-
 		data := &StockData{
 			ID:       stock.ID,
-			Name:     item.Name,
-			Unit:     unit.Name,
+			Name:     stock.R.Item.Name,
+			Unit:     stock.R.Unit.Name,
 			Quantity: stock.Quantity,
 		}
 		stockData = append(stockData, data)
@@ -101,8 +96,8 @@ func (db *StockDataStore) CreateNewStock(ctx context.Context, data *models.Stock
 
 // StockDataPage struct
 type StockDataPage struct {
-	Data  []*StockData
-	Pages *Page
+	Data  []*StockData `boil:"data" json:"data"`
+	Pages *Page        `boil:"pages" json:"pages"`
 }
 
 // StockData struct
