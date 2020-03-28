@@ -20,7 +20,13 @@ func (res *UnitResource) router() *chi.Mux {
 
 	r.Use(AuthMiddleware)
 	r.Get("/", GetAllUnit(res.UnitDatastore))
-	r.With(UserCtx(res.UserDatastore)).Post("/", CreateUnit(res.UnitDatastore))
+
+	r.Group(func(r chi.Router) {
+		r.Use(UserCtx(res.UserDatastore))
+
+		r.Post("/", CreateUnit(res.UnitDatastore))
+		r.Delete("/{unitID}", DeleteUnit(res.UnitDatastore))
+	})
 
 	return r
 }
@@ -60,6 +66,29 @@ func CreateUnit(repo interface {model.HasCreateUnit}) http.HandlerFunc {
 		}
 
 		render.JSON(w, r, unit)
+	}
+}
+
+// DeleteUnit deletes unit by given id.
+func DeleteUnit(repo interface {model.HasDeleteUnit}) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		unitID := chi.URLParam(r, "unitID")
+		if unitID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
+		err := repo.DeleteUnit(r.Context(), unitID)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
 	}
 }
 
