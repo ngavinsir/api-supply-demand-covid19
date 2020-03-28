@@ -38,3 +38,14 @@
         "name": "Liter"
     }
     ```
+
+# Delete Unit
+
+* Endpoint: `/api/v1/units/{unitID}`
+* HTTP Method: `DELETE`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body: `-`
+* Response Body: `-`
