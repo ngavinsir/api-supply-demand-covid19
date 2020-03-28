@@ -31,7 +31,7 @@ func (db *RequestDatastore) CreateRequest(
 	ctx context.Context,
 	requestItems []*models.RequestItem,
 	applicantID string,
-) (*models.Request, error) {
+) (*RequestData, error) {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -49,13 +49,44 @@ func (db *RequestDatastore) CreateRequest(
 		return nil, err
 	}
 
+	var items []*models.RequestItem
+	resultChan := make(chan struct {
+		*models.RequestItem
+		error
+	}) 
+
 	for _, item := range requestItems {
-		item.ID = ksuid.New().String()
+		go func(item *models.RequestItem) {
+			item.ID = ksuid.New().String()
+			item.RequestID = request.ID
+			
+			if err := item.Insert(ctx, tx, boil.Infer()); err != nil {
+				tx.Rollback()
+				resultChan <- struct {
+					*models.RequestItem
+					error
+				} { nil, err }
+			}
+
+			resultChan <- struct {
+				*models.RequestItem
+				error
+			} { item, nil }
+		}(item)
 	}
-	err = request.AddRequestItems(ctx, tx, true, requestItems...)
-	if err != nil {
-		tx.Rollback()
-		return nil, err
+
+	for i := 0; i < len(requestItems); i++ {
+		result := <- resultChan
+		if result.error != nil {
+			tx.Rollback()
+			return nil, result.error
+		}
+		items = append(items, result.RequestItem)
+	}
+
+	requestData := &RequestData{
+		Request: request,
+		Items:    items,
 	}
 
 	err = tx.Commit()
@@ -63,7 +94,7 @@ func (db *RequestDatastore) CreateRequest(
 		return nil, err
 	}
 
-	return request, nil
+	return requestData, nil
 }
 
 // GetAllRequest gets all requests.
@@ -77,4 +108,10 @@ func (db *RequestDatastore) GetAllRequest(ctx context.Context) (*models.RequestS
 	}
 	
 	return &requests, nil
+}
+
+// RequestData struct
+type RequestData struct {
+	Request  *models.Request       `boil:"request" json:"request"`
+	Items    []*models.RequestItem `boil:"items" json:"items"`
 }
