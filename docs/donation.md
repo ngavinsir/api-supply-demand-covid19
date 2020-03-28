@@ -9,7 +9,7 @@
 * Request Body:
     ```
     {
-        "donation": [
+        "donationItems": [
             {
                 "item_id": 1,
                 "unit_id": 1,
@@ -18,7 +18,7 @@
             {
                 "item_id": 2,
                 "unit_id": 2,
-                "quantity: 10
+                "quantity": 10
             },
         ]
     }
