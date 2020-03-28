@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -25,7 +26,8 @@ type AuthResource struct {
 // Common ctx key.
 var (
 	UserIDCtxKey = &contextKey{"User_id"}
-	UserCtxKey = &contextKey{"User"}
+	UserCtxKey   = &contextKey{"User"}
+	PageCtxKey   = &contextKey{"Pagination"}
 )
 
 var jwtAuth *jwtauth.JWTAuth
@@ -46,7 +48,7 @@ func (store *AuthResource) router() *chi.Mux {
 	r.Post("/login", Login(store))
 	r.Post("/register", Register(store))
 	r.With(AuthMiddleware).Post("/refresh", RefreshToken)
-	
+
 	return r
 }
 
@@ -79,7 +81,7 @@ func Register(repo interface {
 }
 
 // Login handler
-func Login(repo interface {model.HasGetUserByEmail}) http.HandlerFunc {
+func Login(repo interface{ model.HasGetUserByEmail }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := &LoginRequest{}
 		if err := render.Bind(r, data); err != nil {
@@ -113,14 +115,14 @@ func loginLogic(ctx context.Context, repo model.HasGetUserByEmail, data *models.
 	jwtClaims["exp"] = jwtauth.ExpireIn(3 * time.Hour)
 
 	_, tokenString, _ := jwtAuth.Encode(jwtClaims)
-	
+
 	loginResponse := &LoginResponse{
-		Email: user.Email,
-		Name:  user.Name,
-		Role: user.Role,
+		Email:         user.Email,
+		Name:          user.Name,
+		Role:          user.Role,
 		ContactPerson: user.ContactPerson.String,
 		ContactNumber: user.ContactNumber.String,
-		JWT: tokenString,
+		JWT:           tokenString,
 	}
 
 	return loginResponse, nil
@@ -176,7 +178,7 @@ func extractUserID(next http.Handler) http.Handler {
 }
 
 // UserCtx middleware is used to extract user information from jwt.
-func UserCtx(repo interface {model.HasGetUserByID}) func(http.Handler) http.Handler {
+func UserCtx(repo interface{ model.HasGetUserByID }) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			userID, _ := r.Context().Value(UserIDCtxKey).(string)
@@ -191,6 +193,35 @@ func UserCtx(repo interface {model.HasGetUserByID}) func(http.Handler) http.Hand
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// PaginationCtx middleware is used to exctract page and size query param
+func PaginationCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		page, err := strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil || page < 1 {
+			page = 1
+		}
+
+		size, err := strconv.Atoi(r.URL.Query().Get("size"))
+		if err != nil || size < 1 {
+			size = 1
+		}
+
+		paging := &Paging{
+			Page: page,
+			Size: size,
+		}
+
+		ctx := context.WithValue(r.Context(), PageCtxKey, paging)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// Paging struct
+type Paging struct {
+	Page int
+	Size int
 }
 
 // RegisterRequest struct
