@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	testRequestCount = 1000
-	testRequestItemCount = 10
+	testRequestCount = 15
+	testRequestItemCount = 1000
 	testUnitID = "TEST_UNIT_ID"
 	testUnitName = "TEST_UNIT_NAME"
 	testItemID = "TEST_ITEM_ID"
@@ -91,7 +91,7 @@ func testCreateRequest(repo *RequestDatastore, unitID string, itemID string, use
 					requestItems = append(requestItems, requestItem)
 				}
 
-				request, err := repo.CreateRequest(
+				requestData, err := repo.CreateRequest(
 					context.Background(), 
 					requestItems, 
 					userID,
@@ -100,20 +100,15 @@ func testCreateRequest(repo *RequestDatastore, unitID string, itemID string, use
 					t.Error(err)
 				}
 
-				if request.ID == "" {
-					t.Errorf("Want request id assigned, got %s", request.ID)
-				}
-				
-				requestItems, err = request.RequestItems().All(context.Background(), repo.DB)
-				if err != nil {
-					t.Error(err)
+				if requestData.Request.ID == "" {
+					t.Errorf("Want request id assigned, got %s", requestData.Request.ID)
 				}
 
-				if got, want := len(requestItems), testRequestItemCount; got != want {
+				if got, want := len(requestData.Items), testRequestItemCount; got != want {
 					t.Errorf("Want request items count %d, got %d", want, got)
 				}
 
-				for _, item := range requestItems {
+				for _, item := range requestData.Items {
 					if item.ID == "" {
 						t.Errorf("Want request item id assigned, got %s", item.ID)
 					}
