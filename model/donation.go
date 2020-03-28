@@ -41,7 +41,7 @@ func (db *DonationDataStore) CreateDonation(
 		return nil, err
 	}
 
-	items := []*models.DonationItem{}
+	var items []*models.DonationItem
 	resultChan := make(chan struct {
 		*models.DonationItem
 		error
