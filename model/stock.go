@@ -36,7 +36,7 @@ func (db *StockDataStore) GetAllStock(ctx context.Context, page int, size int) (
 	if err != nil {
 		return nil, err
 	}
-	isLast := (int(stocksCount) - (size * limit)) < size
+	isLast := (int(stocksCount) - (size * page)) < size
 	isFirst := page == 1
 	totalPages := int(math.Ceil(float64(stocksCount) / float64(size)))
 	if totalPages == 0 {
