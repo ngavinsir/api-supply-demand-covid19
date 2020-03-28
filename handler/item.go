@@ -20,7 +20,13 @@ func (res *ItemResource) router() *chi.Mux {
 
 	r.Use(AuthMiddleware)
 	r.Get("/", GetAllItem(res.ItemDatastore))
-	r.With(UserCtx(res.UserDatastore)).Post("/", CreateItem(res.ItemDatastore))
+
+	r.Group(func(r chi.Router) {
+		r.Use(UserCtx(res.UserDatastore))
+
+		r.Post("/", CreateItem(res.ItemDatastore))
+		r.Delete("/{itemID}", DeleteItem(res.ItemDatastore))
+	})
 
 	return r
 }
@@ -60,6 +66,29 @@ func CreateItem(repo interface {model.HasCreateItem}) http.HandlerFunc {
 		}
 
 		render.JSON(w, r, item)
+	}
+}
+
+// DeleteItem deletes item by given item id.
+func DeleteItem(repo interface {model.HasDeleteItem}) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		itemID := chi.URLParam(r, "itemID")
+		if itemID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
+		err := repo.DeleteItem(r.Context(), itemID)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
 	}
 }
 
