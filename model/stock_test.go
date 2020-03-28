@@ -73,13 +73,13 @@ func testCreateStock(repo *StockDataStore) func(t *testing.T) {
 
 func testGetAllStock(repo *StockDataStore) func(t *testing.T) {
 	return func(t *testing.T) {
-		stocks, err := repo.GetAllStock(context.Background())
+		stocks, err := repo.GetAllStock(context.Background(), 1, 10)
 		if err != nil {
 			t.Error(err)
 		}
 
-		if len(stocks) != testStockLen {
-			t.Errorf("Want stock count %d, got %d", testStockLen, len(stocks))
+		if len(stocks.Data) != testStockLen {
+			t.Errorf("Want stock count %d, got %d", testStockLen, len(stocks.Data))
 		}
 	}
 }

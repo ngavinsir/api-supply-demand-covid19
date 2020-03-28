@@ -21,7 +21,7 @@
         ],
         "pages": {
             "current" : 1,
-            "size" :  5,
+            "total" :  5,
             "first" : true,
             "last" : false
         }

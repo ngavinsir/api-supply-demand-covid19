@@ -16,6 +16,7 @@ type StockResource struct {
 func (store *StockResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
+	r.Use(PaginationCtx)
 	r.Get("/", GetAllStock(store))
 
 	return r
@@ -26,24 +27,15 @@ func GetAllStock(repo interface {
 	model.HasGetAllStock
 }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		stocks, err := repo.GetAllStock(r.Context())
+		paging, _ := r.Context().Value(PageCtxKey).(*Paging)
+
+		stockDataPage, err := repo.GetAllStock(r.Context(), paging.Page, paging.Size)
 
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
 		}
 
-		stockResponse := &StockResponse{
-			Success: true,
-			Data:    stocks,
-		}
-
-		render.JSON(w, r, stockResponse)
+		render.JSON(w, r, stockDataPage)
 	}
-}
-
-// StockResponse struct
-type StockResponse struct {
-	Success bool               `boil:"success" json:"success"`
-	Data    []*model.StockData `boil:"data" json:"data"`
 }
