@@ -9,7 +9,8 @@ import (
 
 // API provides application resources and handlers.
 type API struct {
-	authResource *AuthResource
+	authResource    *AuthResource
+	stockResource   *StockResource
 	requestResource *RequestResource
 }
 
@@ -17,15 +18,18 @@ type API struct {
 func NewAPI(db *sql.DB) *API {
 	userDatastore := &model.UserDatastore{DB: db}
 	requestDatastore := &model.RequestDatastore{DB: db}
+	stockDataStore := &model.StockDataStore{DB: db}
 
 	authResource := &AuthResource{UserDatastore: userDatastore}
+	stockResource := &StockResource{StockDataStore: stockDataStore}
 	requestResource := &RequestResource{
 		requestDatastore: requestDatastore,
-		userDatastore: userDatastore,
+		userDatastore:    userDatastore,
 	}
 
 	api := &API{
-		authResource: authResource,
+		authResource:    authResource,
+		stockResource:   stockResource,
 		requestResource: requestResource,
 	}
 	return api
@@ -36,6 +40,7 @@ func (api *API) Router() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Mount("/auth", api.authResource.router())
+	r.Mount("/stocks", api.stockResource.router())
 	r.Mount("/requests", api.requestResource.router())
 
 	return r
