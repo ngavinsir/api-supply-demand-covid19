@@ -30,7 +30,7 @@ func CreateDonation(repo interface {
 	model.HasCreateDonation
 }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data := &CreateRequestDonation{}
+		data := &CreateDonationRequest{}
 		if err := render.Bind(r, data); err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))
 			return
@@ -52,13 +52,13 @@ func CreateDonation(repo interface {
 	}
 }
 
-// CreateRequestDonation struct
-type CreateRequestDonation struct {
+// CreateDonationRequest struct
+type CreateDonationRequest struct {
 	DonationItems []*models.DonationItem `json:"donationItems"`
 }
 
 // Bind RegisterRequest ([]RequestItem) [Required]
-func (req *CreateRequestDonation) Bind(r *http.Request) error {
+func (req *CreateDonationRequest) Bind(r *http.Request) error {
 	if req.DonationItems == nil || len(req.DonationItems) == 0 {
 		return ErrMissingReqFields
 	}
