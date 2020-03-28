@@ -10,11 +10,12 @@ import (
 
 // API provides application resources and handlers.
 type API struct {
-	authResource    *AuthResource
-	unitResource    *UnitResource
-	stockResource   *StockResource
-	requestResource *RequestResource
-	itemResource    *ItemResource
+	authResource     *AuthResource
+	unitResource     *UnitResource
+	stockResource    *StockResource
+	requestResource  *RequestResource
+	itemResource     *ItemResource
+	donationResource *DonationResource
 }
 
 // NewAPI configures and returns application API.
@@ -24,6 +25,7 @@ func NewAPI(db *sql.DB) *API {
 	requestDatastore := &model.RequestDatastore{DB: db}
 	itemDatastore := &model.ItemDatastore{DB: db}
 	stockDataStore := &model.StockDataStore{DB: db}
+	donationDataStore := &model.DonationDataStore{DB: db}
 
 	authResource := &AuthResource{UserDatastore: userDatastore}
 	unitResource := &UnitResource{
@@ -39,13 +41,18 @@ func NewAPI(db *sql.DB) *API {
 		ItemDatastore: itemDatastore,
 		UserDatastore: userDatastore,
 	}
+	donationResource := &DonationResource{
+		DonationDataStore: donationDataStore,
+		UserDatastore:     userDatastore,
+	}
 
 	api := &API{
-		authResource:    authResource,
-		unitResource:    unitResource,
-		stockResource:   stockResource,
-		requestResource: requestResource,
-		itemResource:    itemResource,
+		authResource:     authResource,
+		unitResource:     unitResource,
+		stockResource:    stockResource,
+		requestResource:  requestResource,
+		itemResource:     itemResource,
+		donationResource: donationResource,
 	}
 
 	return api
@@ -64,6 +71,7 @@ func (api *API) Router() *chi.Mux {
 	r.Mount("/stocks", api.stockResource.router())
 	r.Mount("/requests", api.requestResource.router())
 	r.Mount("/items", api.itemResource.router())
+	r.Mount("/donations", api.donationResource.router())
 
 	return r
 }
