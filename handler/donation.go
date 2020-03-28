@@ -37,7 +37,7 @@ func CreateDonation(repo interface {
 		}
 
 		user, _ := r.Context().Value(UserCtxKey).(*models.User)
-		if user.Role != model.RoleDonator {
+		if user.Role != model.RoleDonator && user.Role != model.RoleAdmin {
 			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
 			return
 		}
