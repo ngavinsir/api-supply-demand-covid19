@@ -205,7 +205,7 @@ func PaginationCtx(next http.Handler) http.Handler {
 
 		size, err := strconv.Atoi(r.URL.Query().Get("size"))
 		if err != nil || size < 1 {
-			size = 1
+			size = 10
 		}
 
 		paging := &Paging{
