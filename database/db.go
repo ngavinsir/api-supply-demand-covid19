@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"os"
+	"time"
 )
 
 // InitDB opens new db connection.
@@ -23,5 +24,10 @@ func connect(conn string) (*sql.DB, error) {
 	if err = db.Ping(); err != nil {
 		return nil, err
 	}
+
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
+
 	return db, nil
 }
