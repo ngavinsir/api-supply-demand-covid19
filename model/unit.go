@@ -19,6 +19,11 @@ type HasGetAllUnit interface {
 	GetAllUnit(ctx context.Context) (*models.UnitSlice, error)
 }
 
+// HasDeleteUnit handles item deletion.
+type HasDeleteUnit interface {
+	DeleteUnit(ctx context.Context, unitID string) error
+}
+
 // UnitDatastore holds db information.
 type UnitDatastore struct {
 	*sql.DB
@@ -46,4 +51,11 @@ func (db *UnitDatastore) GetAllUnit(ctx context.Context) (*models.UnitSlice, err
 	}
 
 	return &units, nil
+}
+
+// DeleteUnit deletes unit by given id.
+func (db *UnitDatastore) DeleteUnit(ctx context.Context, unitID string) error {
+	_, err := models.Units(models.UnitWhere.ID.EQ(unitID)).DeleteAll(ctx, db)
+	
+	return err
 }
