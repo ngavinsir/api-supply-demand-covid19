@@ -13,7 +13,12 @@
             {
                 "item_id": "1",
                 "unit_id": "1",
-                "quantity": "75.75"
+                "quantity": 11
+            },
+            {
+                "item_id": "1",
+                "unit_id": "1",
+                "quantity": 2.13
             }
         ]
     }
@@ -21,10 +26,28 @@
 * Response Body:
     ```
     {
-        "id": "1ZiG6pthZHO1wHRIue7e9AK3He7",
-        "date": "2020-03-27T20:05:28.121736048+07:00",
-        "is_fulfilled": false,
-        "donation_applicant_id": "1ZiESUvzPPP0r9SCTtkt84eAGfP"
+        "request": {
+            "id": "1ZlhoZxu6Ho0SL8P2v4Y66MpfQt",
+            "date": "2020-03-29T01:22:43.970673019+07:00",
+            "is_fulfilled": false,
+            "donation_applicant_id": "1ZiESUvzPPP0r9SCTtkt84eAGfP"
+        },
+        "items": [
+            {
+                "id": "1ZlhodV3fbEGU2DKzSBiBpvZQJy",
+                "item_id": "1",
+                "unit_id": "1",
+                "quantity": "11",
+                "request_id": "1ZlhoZxu6Ho0SL8P2v4Y66MpfQt"
+            },
+            {
+                "id": "1Zlhoc2up8FHrKdo49zsuaH51Vc",
+                "item_id": "1",
+                "unit_id": "1",
+                "quantity": "2.13",
+                "request_id": "1ZlhoZxu6Ho0SL8P2v4Y66MpfQt"
+            }
+        ]
     }
     ```
 
