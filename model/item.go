@@ -19,6 +19,11 @@ type HasGetAllItem interface {
 	GetAllItem(ctx context.Context) (*models.ItemSlice, error)
 }
 
+// HasDeleteItem handles item deletion.
+type HasDeleteItem interface {
+	DeleteItem(ctx context.Context, itemID string) error
+}
+
 // ItemDatastore holds db information.
 type ItemDatastore struct {
 	*sql.DB
@@ -46,4 +51,11 @@ func (db *ItemDatastore) GetAllItem(ctx context.Context) (*models.ItemSlice, err
 	}
 
 	return &items, nil
+}
+
+// DeleteItem deletes item by given id.
+func (db *ItemDatastore) DeleteItem(ctx context.Context, itemID string) error {
+	_, err := models.Items(models.ItemWhere.ID.EQ(itemID)).DeleteAll(ctx, db)
+	
+	return err
 }
