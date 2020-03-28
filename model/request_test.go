@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/ericlagergren/decimal"
@@ -12,6 +13,8 @@ import (
 )
 
 const (
+	testRequestCount = 1000
+	testRequestItemCount = 10
 	testUnitID = "TEST_UNIT_ID"
 	testUnitName = "TEST_UNIT_NAME"
 	testItemID = "TEST_ITEM_ID"
@@ -67,35 +70,56 @@ func TestRequest(t *testing.T) {
 
 func testCreateRequest(repo *RequestDatastore, unitID string, itemID string, userID string) func(t *testing.T) {
 	return func(t *testing.T) {
-		var quantity types.Decimal
-		quantity.Big, _ = new(decimal.Big).SetString("15.5")
+		var wg sync.WaitGroup
 
-		requestItem1 := &models.RequestItem{
-			ItemID: itemID,
-			Quantity: quantity,
-			UnitID: unitID,
-		}
-		requestItem2 := &models.RequestItem{
-			ItemID: itemID,
-			Quantity: quantity,
-			UnitID: unitID,
-		}
-		request, err := repo.CreateRequest(context.Background(), []*models.RequestItem{requestItem1, requestItem2}, userID)
-		if err != nil {
-			t.Error(err)
-		}
+		for i := 0; i < testRequestCount; i++ {
+			wg.Add(1)
 
-		if request.ID == "" {
-			t.Errorf("Want request id assigned, got %s", request.ID)
-		}
-		
-		requestItems, err := request.RequestItems().All(context.Background(), repo.DB)
-		if err != nil {
-			t.Error(err)
-		}
+			go func() {
+				defer wg.Done()
 
-		if got, want := len(requestItems), 2; got != want {
-			t.Errorf("Want request items count %d, got %d", want, got)
+				var quantity types.Decimal
+				quantity.Big, _ = new(decimal.Big).SetString("15.5")
+
+				var requestItems []*models.RequestItem
+				for i := 0; i < testRequestItemCount; i++ {
+					requestItem := &models.RequestItem{
+						ItemID: itemID,
+						Quantity: quantity,
+						UnitID: unitID,
+					}
+					requestItems = append(requestItems, requestItem)
+				}
+
+				request, err := repo.CreateRequest(
+					context.Background(), 
+					requestItems, 
+					userID,
+				)
+				if err != nil {
+					t.Error(err)
+				}
+
+				if request.ID == "" {
+					t.Errorf("Want request id assigned, got %s", request.ID)
+				}
+				
+				requestItems, err = request.RequestItems().All(context.Background(), repo.DB)
+				if err != nil {
+					t.Error(err)
+				}
+
+				if got, want := len(requestItems), testRequestItemCount; got != want {
+					t.Errorf("Want request items count %d, got %d", want, got)
+				}
+
+				for _, item := range requestItems {
+					if item.ID == "" {
+						t.Errorf("Want request item id assigned, got %s", item.ID)
+					}
+				}
+			}()
 		}
+		wg.Wait()
 	}
 }
