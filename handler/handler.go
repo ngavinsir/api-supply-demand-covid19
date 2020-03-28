@@ -12,7 +12,9 @@ import (
 type API struct {
 	authResource *AuthResource
 	unitResource *UnitResource
+	stockResource   *StockResource
 	requestResource *RequestResource
+	itemResource *ItemResource
 }
 
 // NewAPI configures and returns application API.
@@ -20,21 +22,31 @@ func NewAPI(db *sql.DB) *API {
 	userDatastore := &model.UserDatastore{DB: db}
 	unitDatastore := &model.UnitDatastore{DB: db}
 	requestDatastore := &model.RequestDatastore{DB: db}
+	itemDatastore := &model.ItemDatastore{DB: db}
+	stockDataStore := &model.StockDataStore{DB: db}
 
 	authResource := &AuthResource{UserDatastore: userDatastore}
 	unitResource := &UnitResource{
 		UnitDatastore: unitDatastore,
 		UserDatastore: userDatastore,
 	}
+	stockResource := &StockResource{StockDataStore: stockDataStore}
 	requestResource := &RequestResource{
 		requestDatastore: requestDatastore,
-		userDatastore: userDatastore,
+		userDatastore:    userDatastore,
+	}
+	itemResource := &ItemResource{
+		ItemDatastore: itemDatastore,
+		UserDatastore: userDatastore,
 	}
 
 	api := &API{
 		authResource: authResource,
 		unitResource: unitResource,
+		authResource:    authResource,
+		stockResource:   stockResource,
 		requestResource: requestResource,
+		itemResource: itemResource,
 	}
 
 	return api
@@ -50,7 +62,9 @@ func (api *API) Router() *chi.Mux {
 
 	r.Mount("/auth", api.authResource.router())
 	r.Mount("/units", api.unitResource.router())
+	r.Mount("/stocks", api.stockResource.router())
 	r.Mount("/requests", api.requestResource.router())
+	r.Mount("/items", api.itemResource.router())
 
 	return r
 }
