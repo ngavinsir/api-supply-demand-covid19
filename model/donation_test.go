@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"sync"
 	"testing"
 
 	"github.com/ericlagergren/decimal"
@@ -16,7 +17,8 @@ const (
 	testDonationItemItemID = "ItemID"
 	testDonationItemUnitID = "UnitID"
 	testDonationUserID     = "UserID"
-	testDonationItemsLen   = 10
+	testDonationItemsLen   = 15
+	testDonationCount	   = 1000
 )
 
 func TestDonation(t *testing.T) {
@@ -62,39 +64,48 @@ func testCreateDonation(repo *DonationDataStore) func(t *testing.T) {
 
 		user.Insert(context.Background(), repo, boil.Infer())
 
-		donationItem := []*models.DonationItem{}
-		for i := 0; i < testDonationItemsLen; i++ {
-			item := &models.DonationItem{
-				ItemID:   testDonationItemItemID,
-				UnitID:   testDonationItemUnitID,
-				Quantity: quantity,
-			}
-			donationItem = append(donationItem, item)
+		var wg sync.WaitGroup
+		for i := 0; i < testDonationCount; i++ {
+			wg.Add(1)
+
+			go func() {
+				defer wg.Done()
+
+				donationItem := []*models.DonationItem{}
+				for i := 0; i < testDonationItemsLen; i++ {
+					item := &models.DonationItem{
+						ItemID:   testDonationItemItemID,
+						UnitID:   testDonationItemUnitID,
+						Quantity: quantity,
+					}
+					donationItem = append(donationItem, item)
+				}
+	
+				donation, err := repo.CreateDonation(context.Background(), donationItem, user.ID)
+	
+				if err != nil {
+					t.Error(err)
+				}
+	
+				if donation.Donation.ID == "" {
+					t.Errorf("Want donation id assigned, got %s", donation.Donation.ID)
+				}
+	
+				if got, want := len(donation.Items), testDonationItemsLen; got != want {
+					t.Errorf("Want donation items length %d, got %d", want, got)
+				}
+	
+				if got, want := donation.Donation.DonatorID, testDonationUserID; got != want {
+					t.Errorf("Want donation donator id %s, got %s", want, got)
+				}
+	
+				for i := 0; i < testDonationItemsLen; i++ {
+					if got, want := donation.Items[i].DonationID, donation.Donation.ID; got != want {
+						t.Errorf("Want donation item donation id %s, got %s", want, got)
+					}
+				}
+			}()
 		}
-
-		donation, err := repo.CreateDonation(context.Background(), donationItem, user.ID)
-
-		if err != nil {
-			t.Error(err)
-		}
-
-		if donation.Donation.ID == "" {
-			t.Errorf("Want donation id assigned, got %s", donation.Donation.ID)
-		}
-
-		if got, want := len(donation.Items), testDonationItemsLen; got != want {
-			t.Errorf("Want donation items length %d, got %d", want, got)
-		}
-
-		if got, want := donation.Donation.DonatorID, testDonationUserID; got != want {
-			t.Errorf("Want donation donator id %s, got %s", want, got)
-		}
-
-		for i := 0; i < testDonationItemsLen; i++ {
-			if got, want := donation.Items[i].DonationID, donation.Donation.ID; got != want {
-				t.Errorf("Want donation item donation id %s, got %s", want, got)
-			}
-		}
-
+		wg.Wait()
 	}
 }

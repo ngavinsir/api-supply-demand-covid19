@@ -42,19 +42,38 @@ func (db *DonationDataStore) CreateDonation(
 	}
 
 	items := []*models.DonationItem{}
+	resultChan := make(chan struct {
+		*models.DonationItem
+		error
+	}) 
+
 	for _, item := range data {
-		item := &models.DonationItem{
-			ID:         ksuid.New().String(),
-			DonationID: donation.ID,
-			ItemID:     item.ItemID,
-			UnitID:     item.UnitID,
-			Quantity:   item.Quantity,
-		}
-		items = append(items, item)
-		if err := item.Insert(ctx, tx, boil.Infer()); err != nil {
+		go func(item *models.DonationItem) {
+			item.ID = ksuid.New().String()
+			item.DonationID = donation.ID
+			
+			if err := item.Insert(ctx, tx, boil.Infer()); err != nil {
+				tx.Rollback()
+				resultChan <- struct {
+					*models.DonationItem
+					error
+				} { nil, err }
+			}
+
+			resultChan <- struct {
+				*models.DonationItem
+				error
+			} { item, nil }
+		}(item)
+	}
+
+	for i := 0; i < len(data); i++ {
+		result := <- resultChan
+		if result.error != nil {
 			tx.Rollback()
-			return nil, err
+			return nil, result.error
 		}
+		items = append(items, result.DonationItem)
 	}
 
 	donationData := &DonationData{
