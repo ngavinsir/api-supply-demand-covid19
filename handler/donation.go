@@ -20,15 +20,16 @@ func (store *DonationResource) router() *chi.Mux {
 
 	r.Use(AuthMiddleware)
 	r.Use(UserCtx(store.UserDatastore))
-	r.Post("/", CreateDonation(store.DonationDataStore))
+	r.Post("/", CreateOrUpdateDonation(store.DonationDataStore, model.CreateAction))
+	r.Put("/", CreateOrUpdateDonation(store.DonationDataStore, model.UpdateAction))
 
 	return r
 }
 
-// CreateDonation return donations
-func CreateDonation(repo interface {
-	model.HasCreateDonation
-}) http.HandlerFunc {
+// CreateOrUpdateDonation return donations
+func CreateOrUpdateDonation(repo interface {
+	model.HasCreateOrUpdate
+}, action string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := &CreateDonationRequest{}
 		if err := render.Bind(r, data); err != nil {
@@ -42,7 +43,7 @@ func CreateDonation(repo interface {
 			return
 		}
 
-		request, err := repo.CreateDonation(r.Context(), data.DonationItems, user.ID)
+		request, err := repo.CreateOrUpdateDonation(r.Context(), data.DonationItems, user.ID, action)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
