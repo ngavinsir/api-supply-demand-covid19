@@ -10,9 +10,14 @@ import (
 	"github.com/volatiletech/sqlboiler/boil"
 )
 
-// HasCreateDonation handles get stock data.
-type HasCreateDonation interface {
-	CreateDonation(ctx context.Context, data []*models.DonationItem, userID string) (*DonationData, error)
+const (
+	CreateAction = "CREATE"
+	UpdateAction = "UPDATE"
+)
+
+// HasCreateOrUpdate handles get donation data.
+type HasCreateOrUpdate interface {
+	CreateOrUpdateDonation(ctx context.Context, data []*models.DonationItem, userID string, action string) (*DonationData, error)
 }
 
 // DonationDataStore holds db information.
@@ -20,9 +25,9 @@ type DonationDataStore struct {
 	*sql.DB
 }
 
-// CreateDonation handles create new donation
-func (db *DonationDataStore) CreateDonation(
-	ctx context.Context, data []*models.DonationItem, userID string) (*DonationData, error) {
+// CreateOrUpdateDonation handles create new donation
+func (db *DonationDataStore) CreateOrUpdateDonation(
+	ctx context.Context, data []*models.DonationItem, userID string, action string) (*DonationData, error) {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -45,30 +50,40 @@ func (db *DonationDataStore) CreateDonation(
 	resultChan := make(chan struct {
 		*models.DonationItem
 		error
-	}) 
+	})
 
 	for _, item := range data {
 		go func(item *models.DonationItem) {
-			item.ID = ksuid.New().String()
-			item.DonationID = donation.ID
-			
-			if err := item.Insert(ctx, tx, boil.Infer()); err != nil {
+			var err error
+
+			switch action {
+			case CreateAction:
+				item.ID = ksuid.New().String()
+				item.DonationID = donation.ID
+
+				err = item.Insert(ctx, tx, boil.Infer())
+			case UpdateAction:
+				item.DonationID = donation.ID
+				_, err = item.Update(ctx, tx, boil.Infer())
+			}
+
+			if err != nil {
 				tx.Rollback()
 				resultChan <- struct {
 					*models.DonationItem
 					error
-				} { nil, err }
+				}{nil, err}
 			}
 
 			resultChan <- struct {
 				*models.DonationItem
 				error
-			} { item, nil }
+			}{item, nil}
 		}(item)
 	}
 
 	for i := 0; i < len(data); i++ {
-		result := <- resultChan
+		result := <-resultChan
 		if result.error != nil {
 			tx.Rollback()
 			return nil, result.error
