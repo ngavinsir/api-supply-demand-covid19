@@ -17,8 +17,10 @@ const (
 	testDonationItemItemID = "ItemID"
 	testDonationItemUnitID = "UnitID"
 	testDonationUserID     = "UserID"
-	testDonationItemsLen   = 15
-	testDonationCount	   = 1000
+	testDonationItemsLen   = 100
+	testDonationCount	   = 15
+	testDonationStockCount = "150.00"
+	testDonationQuantity   = "1.5"
 )
 
 func TestDonation(t *testing.T) {
@@ -32,13 +34,13 @@ func TestDonation(t *testing.T) {
 		db.Close()
 	}()
 
-	t.Run("Create", testCreateDonation(&DonationDataStore{DB: db}))
+	t.Run("Create", testCreateDonation(&DonationDataStore{DB: db}, &StockDataStore{DB: db}))
 }
 
-func testCreateDonation(repo *DonationDataStore) func(t *testing.T) {
+func testCreateDonation(repo *DonationDataStore, stockRepo *StockDataStore) func(t *testing.T) {
 	return func(t *testing.T) {
 		var quantity types.Decimal
-		quantity.Big, _ = new(decimal.Big).SetString("1.5")
+		quantity.Big, _ = new(decimal.Big).SetString(testDonationQuantity)
 
 		item := &models.Item{
 			ID:   testDonationItemItemID,
@@ -65,6 +67,8 @@ func testCreateDonation(repo *DonationDataStore) func(t *testing.T) {
 		user.Insert(context.Background(), repo, boil.Infer())
 
 		var wg sync.WaitGroup
+		var d *models.Donation
+		var mu sync.Mutex
 		for i := 0; i < testDonationCount; i++ {
 			wg.Add(1)
 
@@ -104,8 +108,45 @@ func testCreateDonation(repo *DonationDataStore) func(t *testing.T) {
 						t.Errorf("Want donation item donation id %s, got %s", want, got)
 					}
 				}
+
+				mu.Lock()
+				if d == nil {
+					d = donation.Donation
+				}
+				mu.Unlock()
 			}()
 		}
 		wg.Wait()
+
+		t.Run("Accept", testAcceptDonation(repo, stockRepo, d))
+	}
+}
+
+func testAcceptDonation(repo *DonationDataStore, stockRepo *StockDataStore, donation *models.Donation) func(t *testing.T) {
+	return func(t *testing.T) {
+		err := repo.AcceptDonation(context.Background(), donation.ID, stockRepo)
+		if err != nil {
+			t.Error(err)
+		}
+
+		err = donation.Reload(context.Background(), repo.DB)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if got, want := donation.IsAccepted, true; got != want {
+			t.Errorf("Want donation is accepted, got %v", got)
+		} 
+
+		stock, err := models.Stocks(
+			models.StockWhere.ItemID.EQ(testDonationItemItemID),
+		).One(context.Background(), repo.DB)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if got, want := stock.Quantity.Big.String(), testDonationStockCount; got != want {
+			t.Errorf("Want stock quantity %s, got %s", want, got)
+		}
 	}
 }
