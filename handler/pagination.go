@@ -43,7 +43,7 @@ func (p *Paging) Offset() int {
 
 // Pages returns page.
 func (p *Paging) Pages(totalCount int64) *Page {
-	isLast := (int(totalCount) - (p.Size * p.Page)) < p.Size
+	isLast := int(totalCount) <= p.Size * p.Page
 	isFirst := p.Page == 1
 	totalPages := int(math.Ceil(float64(totalCount) / float64(p.Size)))
 	if totalPages == 0 {
