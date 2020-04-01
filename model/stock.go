@@ -16,9 +16,9 @@ type HasGetAllStock interface {
 	GetAllStock(ctx context.Context, offset int, limit int) ([]*StockData, int64, error)
 }
 
-// HasCreateNewStock handles create stock data
-type HasCreateNewStock interface {
-	CreateAllStock(ctx context.Context, stock *models.Stock) (*models.Stock, error)
+// HasCreateOrUpdateStock creates or updates stock.
+type HasCreateOrUpdateStock interface {
+	CreateOrUpdateStock(ctx context.Context, stock *models.Stock) (*models.Stock, error)
 }
 
 // StockDataStore holds db information.
@@ -57,8 +57,16 @@ func (db *StockDataStore) GetAllStock(ctx context.Context, offset int, limit int
 	return stockData, stocksCount, err
 }
 
-// CreateNewStock returns stock
-func (db *StockDataStore) CreateNewStock(ctx context.Context, data *models.Stock) (*models.Stock, error) {
+// CreateOrUpdateStock creates a new stock if given item id in given unit doesn't exist or otherwise
+// add given quantity to current stock. 
+func (db *StockDataStore) CreateOrUpdateStock(ctx context.Context, data *models.Stock) (*models.Stock, error) {
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelSerializable,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	stock := &models.Stock{
 		ID:       ksuid.New().String(),
 		ItemID:   data.ItemID,
@@ -66,7 +74,34 @@ func (db *StockDataStore) CreateNewStock(ctx context.Context, data *models.Stock
 		Quantity: data.Quantity,
 	}
 
-	if err := stock.Insert(ctx, db, boil.Infer()); err != nil {
+	if data.ID != "" {
+		stock, err = models.FindStock(ctx, tx, data.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		stock.Quantity.Add(stock.Quantity.Big, data.Quantity.Big)
+	} else {
+		stocks, err := models.Stocks(
+			models.StockWhere.ItemID.EQ(data.ItemID),
+			models.StockWhere.UnitID.EQ(data.UnitID),
+		).All(ctx, tx)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		
+		if len(stocks) > 0 {
+			stock = stocks[0]
+			stock.Quantity.Add(stock.Quantity.Big, data.Quantity.Big)
+		}
+	}
+
+	if err := stock.Upsert(ctx, tx, true, []string{"id"}, boil.Infer(), boil.Infer()); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 
