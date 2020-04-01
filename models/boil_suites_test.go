@@ -181,7 +181,7 @@ func TestInsert(t *testing.T) {
 // or deadlocks can occur.
 func TestToOne(t *testing.T) {
 	t.Run("AllocationItemToAllocationUsingAllocation", testAllocationItemToOneAllocationUsingAllocation)
-	t.Run("AllocationItemToDonationItemUsingDonationItem", testAllocationItemToOneDonationItemUsingDonationItem)
+	t.Run("AllocationItemToItemUsingItem", testAllocationItemToOneItemUsingItem)
 	t.Run("AllocationItemToUnitUsingUnit", testAllocationItemToOneUnitUsingUnit)
 	t.Run("AllocationToRequestUsingRequest", testAllocationToOneRequestUsingRequest)
 	t.Run("AllocationToUserUsingAdmin", testAllocationToOneUserUsingAdmin)
@@ -205,8 +205,8 @@ func TestOneToOne(t *testing.T) {}
 // or deadlocks can occur.
 func TestToMany(t *testing.T) {
 	t.Run("AllocationToAllocationItems", testAllocationToManyAllocationItems)
-	t.Run("DonationItemToAllocationItems", testDonationItemToManyAllocationItems)
 	t.Run("DonationToDonationItems", testDonationToManyDonationItems)
+	t.Run("ItemToAllocationItems", testItemToManyAllocationItems)
 	t.Run("ItemToDonationItems", testItemToManyDonationItems)
 	t.Run("ItemToRequestItems", testItemToManyRequestItems)
 	t.Run("ItemToStocks", testItemToManyStocks)
@@ -225,7 +225,7 @@ func TestToMany(t *testing.T) {
 // or deadlocks can occur.
 func TestToOneSet(t *testing.T) {
 	t.Run("AllocationItemToAllocationUsingAllocationItems", testAllocationItemToOneSetOpAllocationUsingAllocation)
-	t.Run("AllocationItemToDonationItemUsingAllocationItems", testAllocationItemToOneSetOpDonationItemUsingDonationItem)
+	t.Run("AllocationItemToItemUsingAllocationItems", testAllocationItemToOneSetOpItemUsingItem)
 	t.Run("AllocationItemToUnitUsingAllocationItems", testAllocationItemToOneSetOpUnitUsingUnit)
 	t.Run("AllocationToRequestUsingAllocations", testAllocationToOneSetOpRequestUsingRequest)
 	t.Run("AllocationToUserUsingAdminAllocations", testAllocationToOneSetOpUserUsingAdmin)
@@ -257,8 +257,8 @@ func TestOneToOneRemove(t *testing.T) {}
 // or deadlocks can occur.
 func TestToManyAdd(t *testing.T) {
 	t.Run("AllocationToAllocationItems", testAllocationToManyAddOpAllocationItems)
-	t.Run("DonationItemToAllocationItems", testDonationItemToManyAddOpAllocationItems)
 	t.Run("DonationToDonationItems", testDonationToManyAddOpDonationItems)
+	t.Run("ItemToAllocationItems", testItemToManyAddOpAllocationItems)
 	t.Run("ItemToDonationItems", testItemToManyAddOpDonationItems)
 	t.Run("ItemToRequestItems", testItemToManyAddOpRequestItems)
 	t.Run("ItemToStocks", testItemToManyAddOpStocks)

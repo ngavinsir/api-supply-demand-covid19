@@ -24,28 +24,28 @@ import (
 
 // AllocationItem is an object representing the database table.
 type AllocationItem struct {
-	ID             string        `boil:"id" json:"id" toml:"id" yaml:"id"`
-	AllocationID   string        `boil:"allocation_id" json:"allocation_id" toml:"allocation_id" yaml:"allocation_id"`
-	DonationItemID string        `boil:"donation_item_id" json:"donation_item_id" toml:"donation_item_id" yaml:"donation_item_id"`
-	UnitID         string        `boil:"unit_id" json:"unit_id" toml:"unit_id" yaml:"unit_id"`
-	Quantity       types.Decimal `boil:"quantity" json:"quantity" toml:"quantity" yaml:"quantity"`
+	ID           string        `boil:"id" json:"id" toml:"id" yaml:"id"`
+	AllocationID string        `boil:"allocation_id" json:"allocation_id" toml:"allocation_id" yaml:"allocation_id"`
+	ItemID       string        `boil:"item_id" json:"item_id" toml:"item_id" yaml:"item_id"`
+	UnitID       string        `boil:"unit_id" json:"unit_id" toml:"unit_id" yaml:"unit_id"`
+	Quantity     types.Decimal `boil:"quantity" json:"quantity" toml:"quantity" yaml:"quantity"`
 
 	R *allocationItemR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L allocationItemL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AllocationItemColumns = struct {
-	ID             string
-	AllocationID   string
-	DonationItemID string
-	UnitID         string
-	Quantity       string
+	ID           string
+	AllocationID string
+	ItemID       string
+	UnitID       string
+	Quantity     string
 }{
-	ID:             "id",
-	AllocationID:   "allocation_id",
-	DonationItemID: "donation_item_id",
-	UnitID:         "unit_id",
-	Quantity:       "quantity",
+	ID:           "id",
+	AllocationID: "allocation_id",
+	ItemID:       "item_id",
+	UnitID:       "unit_id",
+	Quantity:     "quantity",
 }
 
 // Generated where
@@ -88,35 +88,35 @@ func (w whereHelpertypes_Decimal) GTE(x types.Decimal) qm.QueryMod {
 }
 
 var AllocationItemWhere = struct {
-	ID             whereHelperstring
-	AllocationID   whereHelperstring
-	DonationItemID whereHelperstring
-	UnitID         whereHelperstring
-	Quantity       whereHelpertypes_Decimal
+	ID           whereHelperstring
+	AllocationID whereHelperstring
+	ItemID       whereHelperstring
+	UnitID       whereHelperstring
+	Quantity     whereHelpertypes_Decimal
 }{
-	ID:             whereHelperstring{field: "\"allocation_items\".\"id\""},
-	AllocationID:   whereHelperstring{field: "\"allocation_items\".\"allocation_id\""},
-	DonationItemID: whereHelperstring{field: "\"allocation_items\".\"donation_item_id\""},
-	UnitID:         whereHelperstring{field: "\"allocation_items\".\"unit_id\""},
-	Quantity:       whereHelpertypes_Decimal{field: "\"allocation_items\".\"quantity\""},
+	ID:           whereHelperstring{field: "\"allocation_items\".\"id\""},
+	AllocationID: whereHelperstring{field: "\"allocation_items\".\"allocation_id\""},
+	ItemID:       whereHelperstring{field: "\"allocation_items\".\"item_id\""},
+	UnitID:       whereHelperstring{field: "\"allocation_items\".\"unit_id\""},
+	Quantity:     whereHelpertypes_Decimal{field: "\"allocation_items\".\"quantity\""},
 }
 
 // AllocationItemRels is where relationship names are stored.
 var AllocationItemRels = struct {
-	Allocation   string
-	DonationItem string
-	Unit         string
+	Allocation string
+	Item       string
+	Unit       string
 }{
-	Allocation:   "Allocation",
-	DonationItem: "DonationItem",
-	Unit:         "Unit",
+	Allocation: "Allocation",
+	Item:       "Item",
+	Unit:       "Unit",
 }
 
 // allocationItemR is where relationships are stored.
 type allocationItemR struct {
-	Allocation   *Allocation
-	DonationItem *DonationItem
-	Unit         *Unit
+	Allocation *Allocation
+	Item       *Item
+	Unit       *Unit
 }
 
 // NewStruct creates a new relationship struct
@@ -128,8 +128,8 @@ func (*allocationItemR) NewStruct() *allocationItemR {
 type allocationItemL struct{}
 
 var (
-	allocationItemAllColumns            = []string{"id", "allocation_id", "donation_item_id", "unit_id", "quantity"}
-	allocationItemColumnsWithoutDefault = []string{"id", "allocation_id", "donation_item_id", "unit_id", "quantity"}
+	allocationItemAllColumns            = []string{"id", "allocation_id", "item_id", "unit_id", "quantity"}
+	allocationItemColumnsWithoutDefault = []string{"id", "allocation_id", "item_id", "unit_id", "quantity"}
 	allocationItemColumnsWithDefault    = []string{}
 	allocationItemPrimaryKeyColumns     = []string{"id"}
 )
@@ -423,16 +423,16 @@ func (o *AllocationItem) Allocation(mods ...qm.QueryMod) allocationQuery {
 	return query
 }
 
-// DonationItem pointed to by the foreign key.
-func (o *AllocationItem) DonationItem(mods ...qm.QueryMod) donationItemQuery {
+// Item pointed to by the foreign key.
+func (o *AllocationItem) Item(mods ...qm.QueryMod) itemQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.DonationItemID),
+		qm.Where("\"id\" = ?", o.ItemID),
 	}
 
 	queryMods = append(queryMods, mods...)
 
-	query := DonationItems(queryMods...)
-	queries.SetFrom(query.Query, "\"donation_items\"")
+	query := Items(queryMods...)
+	queries.SetFrom(query.Query, "\"items\"")
 
 	return query
 }
@@ -552,9 +552,9 @@ func (allocationItemL) LoadAllocation(ctx context.Context, e boil.ContextExecuto
 	return nil
 }
 
-// LoadDonationItem allows an eager lookup of values, cached into the
+// LoadItem allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (allocationItemL) LoadDonationItem(ctx context.Context, e boil.ContextExecutor, singular bool, maybeAllocationItem interface{}, mods queries.Applicator) error {
+func (allocationItemL) LoadItem(ctx context.Context, e boil.ContextExecutor, singular bool, maybeAllocationItem interface{}, mods queries.Applicator) error {
 	var slice []*AllocationItem
 	var object *AllocationItem
 
@@ -569,7 +569,7 @@ func (allocationItemL) LoadDonationItem(ctx context.Context, e boil.ContextExecu
 		if object.R == nil {
 			object.R = &allocationItemR{}
 		}
-		args = append(args, object.DonationItemID)
+		args = append(args, object.ItemID)
 
 	} else {
 	Outer:
@@ -579,12 +579,12 @@ func (allocationItemL) LoadDonationItem(ctx context.Context, e boil.ContextExecu
 			}
 
 			for _, a := range args {
-				if a == obj.DonationItemID {
+				if a == obj.ItemID {
 					continue Outer
 				}
 			}
 
-			args = append(args, obj.DonationItemID)
+			args = append(args, obj.ItemID)
 
 		}
 	}
@@ -593,26 +593,26 @@ func (allocationItemL) LoadDonationItem(ctx context.Context, e boil.ContextExecu
 		return nil
 	}
 
-	query := NewQuery(qm.From(`donation_items`), qm.WhereIn(`donation_items.id in ?`, args...))
+	query := NewQuery(qm.From(`items`), qm.WhereIn(`items.id in ?`, args...))
 	if mods != nil {
 		mods.Apply(query)
 	}
 
 	results, err := query.QueryContext(ctx, e)
 	if err != nil {
-		return errors.Wrap(err, "failed to eager load DonationItem")
+		return errors.Wrap(err, "failed to eager load Item")
 	}
 
-	var resultSlice []*DonationItem
+	var resultSlice []*Item
 	if err = queries.Bind(results, &resultSlice); err != nil {
-		return errors.Wrap(err, "failed to bind eager loaded slice DonationItem")
+		return errors.Wrap(err, "failed to bind eager loaded slice Item")
 	}
 
 	if err = results.Close(); err != nil {
-		return errors.Wrap(err, "failed to close results of eager load for donation_items")
+		return errors.Wrap(err, "failed to close results of eager load for items")
 	}
 	if err = results.Err(); err != nil {
-		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for donation_items")
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for items")
 	}
 
 	if len(allocationItemAfterSelectHooks) != 0 {
@@ -629,9 +629,9 @@ func (allocationItemL) LoadDonationItem(ctx context.Context, e boil.ContextExecu
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.DonationItem = foreign
+		object.R.Item = foreign
 		if foreign.R == nil {
-			foreign.R = &donationItemR{}
+			foreign.R = &itemR{}
 		}
 		foreign.R.AllocationItems = append(foreign.R.AllocationItems, object)
 		return nil
@@ -639,10 +639,10 @@ func (allocationItemL) LoadDonationItem(ctx context.Context, e boil.ContextExecu
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.DonationItemID == foreign.ID {
-				local.R.DonationItem = foreign
+			if local.ItemID == foreign.ID {
+				local.R.Item = foreign
 				if foreign.R == nil {
-					foreign.R = &donationItemR{}
+					foreign.R = &itemR{}
 				}
 				foreign.R.AllocationItems = append(foreign.R.AllocationItems, local)
 				break
@@ -801,10 +801,10 @@ func (o *AllocationItem) SetAllocation(ctx context.Context, exec boil.ContextExe
 	return nil
 }
 
-// SetDonationItem of the allocationItem to the related item.
-// Sets o.R.DonationItem to related.
+// SetItem of the allocationItem to the related item.
+// Sets o.R.Item to related.
 // Adds o to related.R.AllocationItems.
-func (o *AllocationItem) SetDonationItem(ctx context.Context, exec boil.ContextExecutor, insert bool, related *DonationItem) error {
+func (o *AllocationItem) SetItem(ctx context.Context, exec boil.ContextExecutor, insert bool, related *Item) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -814,7 +814,7 @@ func (o *AllocationItem) SetDonationItem(ctx context.Context, exec boil.ContextE
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"allocation_items\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"donation_item_id"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"item_id"}),
 		strmangle.WhereClause("\"", "\"", 2, allocationItemPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
@@ -828,17 +828,17 @@ func (o *AllocationItem) SetDonationItem(ctx context.Context, exec boil.ContextE
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.DonationItemID = related.ID
+	o.ItemID = related.ID
 	if o.R == nil {
 		o.R = &allocationItemR{
-			DonationItem: related,
+			Item: related,
 		}
 	} else {
-		o.R.DonationItem = related
+		o.R.Item = related
 	}
 
 	if related.R == nil {
-		related.R = &donationItemR{
+		related.R = &itemR{
 			AllocationItems: AllocationItemSlice{o},
 		}
 	} else {
