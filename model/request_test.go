@@ -100,15 +100,15 @@ func testCreateRequest(repo *RequestDatastore, unitID string, itemID string, use
 					t.Error(err)
 				}
 
-				if requestData.Request.ID == "" {
-					t.Errorf("Want request id assigned, got %s", requestData.Request.ID)
+				if requestData.ID == "" {
+					t.Errorf("Want request id assigned, got %s", requestData.ID)
 				}
 
-				if got, want := len(requestData.Items), testRequestItemCount; got != want {
+				if got, want := len(requestData.RequestItems), testRequestItemCount; got != want {
 					t.Errorf("Want request items count %d, got %d", want, got)
 				}
 
-				for _, item := range requestData.Items {
+				for _, item := range requestData.RequestItems {
 					if item.ID == "" {
 						t.Errorf("Want request item id assigned, got %s", item.ID)
 					}

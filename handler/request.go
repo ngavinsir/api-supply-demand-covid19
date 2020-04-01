@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -22,7 +21,7 @@ func (res *RequestResource) router() *chi.Mux {
 	r.Use(AuthMiddleware)
 	r.Use(UserCtx(res.userDatastore))
 	r.Post("/", CreateRequest(res.requestDatastore))
-	r.Get("/", GetAllRequest(res.requestDatastore))
+	r.With(PaginationCtx).Get("/", GetAllRequest(res.requestDatastore))
 	
 	return r
 }
@@ -55,33 +54,20 @@ func CreateRequest(repo interface {model.HasCreateRequest}) http.HandlerFunc {
 // GetAllRequest gets all requests.
 func GetAllRequest(repo interface { model.HasGetAllRequest }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		requests, err := repo.GetAllRequest(r.Context())
+		paging, _ := r.Context().Value(PageCtxKey).(*Paging)
+
+		requestData, totalCount, err := repo.GetAllRequest(r.Context(), paging.Offset(), paging.Size)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
 		}
 
-		var requestResponses []*RequestResponse
-		for _, r := range *requests {
-			donationApplicant := &LoginResponse{
-				ID: r.R.DonationApplicant.ID,
-				Email: r.R.DonationApplicant.Email,
-				Name: r.R.DonationApplicant.Name,
-				Role: r.R.DonationApplicant.Role,
-				ContactNumber: r.R.DonationApplicant.ContactNumber.String,
-				ContactPerson: r.R.DonationApplicant.ContactPerson.String,
-			}			
-
-			requestResponses = append(requestResponses, &RequestResponse{
-				ID: r.ID,
-				Date: r.Date,
-				IsFulfilled: r.IsFulfilled,
-				RequestItems: &r.R.RequestItems,
-				DonationApplicant: donationApplicant,
-			})
+		requestDataPage := &RequestDataPage{
+			Data: requestData,
+			Pages: paging.Pages(totalCount),
 		}
 
-		render.JSON(w, r, requestResponses)
+		render.JSON(w, r, requestDataPage)
 	}
 }
 
@@ -99,11 +85,8 @@ func (req *CreateRequestRequest) Bind(r *http.Request) error {
 	return nil
 }
 
-// RequestResponse struct
-type RequestResponse struct {
-	ID string `json:"id"`
-	Date time.Time `json:"date"`
-	IsFulfilled	bool `json:"isFulfilled"`
-	DonationApplicant *LoginResponse `json:"donationApplicant"`
-	RequestItems *models.RequestItemSlice `json:"requestItems"`
+// RequestDataPage struct
+type RequestDataPage struct {
+	Data  []*model.RequestData `boil:"data" json:"data"`
+	Pages *Page        `boil:"pages" json:"pages"`
 }

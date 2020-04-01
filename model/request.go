@@ -9,6 +9,7 @@ import (
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/boil"
 	. "github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/types"
 )
 
 // HasCreateRequest handles new request creation.
@@ -18,7 +19,7 @@ type HasCreateRequest interface {
 
 // HasGetAllRequest handles requests retrieval.
 type HasGetAllRequest interface {
-	GetAllRequest(ctx context.Context) (*models.RequestSlice, error)
+	GetAllRequest(ctx context.Context, offset int, limit int) ([]*RequestData, int64, error)
 }
 
 // RequestDatastore holds db information.
@@ -49,7 +50,7 @@ func (db *RequestDatastore) CreateRequest(
 		return nil, err
 	}
 
-	var items []*models.RequestItem
+	var items []*RequestItemData
 	resultChan := make(chan struct {
 		*models.RequestItem
 		error
@@ -59,7 +60,10 @@ func (db *RequestDatastore) CreateRequest(
 		go func(item *models.RequestItem) {
 			item.ID = ksuid.New().String()
 			item.RequestID = request.ID
-			
+
+			item.L.LoadItem(ctx, db, true, item, nil)
+			item.L.LoadUnit(ctx, db, true, item, nil)
+
 			if err := item.Insert(ctx, tx, boil.Infer()); err != nil {
 				tx.Rollback()
 				resultChan <- struct {
@@ -81,12 +85,19 @@ func (db *RequestDatastore) CreateRequest(
 			tx.Rollback()
 			return nil, result.error
 		}
-		items = append(items, result.RequestItem)
+		items = append(items, &RequestItemData{
+			ID: result.RequestItem.ID,
+			Item: result.RequestItem.R.Item.Name,
+			Unit: result.RequestItem.R.Unit.Name,
+			Quantity: result.RequestItem.Quantity,
+		})
 	}
 
 	requestData := &RequestData{
-		Request: request,
-		Items:    items,
+		ID: request.ID,
+		Date: request.Date,
+		IsFulfilled: request.IsFulfilled,
+		RequestItems: items,
 	}
 
 	err = tx.Commit()
@@ -98,20 +109,62 @@ func (db *RequestDatastore) CreateRequest(
 }
 
 // GetAllRequest gets all requests.
-func (db *RequestDatastore) GetAllRequest(ctx context.Context) (*models.RequestSlice, error) {
+func (db *RequestDatastore) GetAllRequest(ctx context.Context, offset int, limit int) ([]*RequestData, int64, error) {
 	requests, err := models.Requests(
-		Load(models.RequestRels.RequestItems),
+		Load("RequestItems.Item"),
+		Load("RequestItems.Unit"),
 		Load(models.RequestRels.DonationApplicant),
+		Offset(offset),
+		Limit(limit),
 	).All(ctx, db)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+
+	var requestData []*RequestData
+	for _, r := range requests {
+		r.R.DonationApplicant.Password = ""		
+
+		var requestItems []*RequestItemData
+		for _, item := range r.R.RequestItems {
+			requestItems = append(requestItems, &RequestItemData{
+				ID: item.ID,
+				Item: item.R.Item.Name,
+				Unit: item.R.Unit.Name,
+				Quantity: item.Quantity,
+			})
+		}
+
+		requestData = append(requestData, &RequestData{
+			ID: r.ID,
+			Date: r.Date,
+			IsFulfilled: r.IsFulfilled,
+			RequestItems: requestItems,
+			DonationApplicant: r.R.DonationApplicant,
+		})
+	}
+
+	requestCount, err := models.Requests().Count(ctx, db)
+	if err != nil {
+		return nil, 0, err
 	}
 	
-	return &requests, nil
+	return requestData, requestCount, nil
 }
 
 // RequestData struct
 type RequestData struct {
-	Request  *models.Request       `boil:"request" json:"request"`
-	Items    []*models.RequestItem `boil:"items" json:"items"`
+	ID string `json:"id"`
+	Date time.Time `json:"date"`
+	IsFulfilled	bool `json:"isFulfilled"`
+	DonationApplicant *models.User `json:"donationApplicant,omitempty"`
+	RequestItems []*RequestItemData `json:"requestItems"`
+}
+
+type RequestItemData struct {
+	ID        string        `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Item    string        `boil:"item" json:"item" toml:"item" yaml:"item"`
+	Unit    string        `boil:"unit" json:"unit" toml:"unit" yaml:"unit"`
+	Quantity  types.Decimal `boil:"quantity" json:"quantity" toml:"quantity" yaml:"quantity"`
+	RequestID string        `boil:"request_id" json:"request_id,omitempty" toml:"request_id" yaml:"request_id"`
 }
