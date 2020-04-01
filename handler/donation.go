@@ -13,14 +13,16 @@ import (
 type DonationResource struct {
 	*model.DonationDataStore
 	*model.UserDatastore
+	*model.StockDataStore
 }
 
-func (store *DonationResource) router() *chi.Mux {
+func (res *DonationResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(AuthMiddleware)
-	r.Use(UserCtx(store.UserDatastore))
-	r.Post("/", CreateDonation(store.DonationDataStore))
+	r.Use(UserCtx(res.UserDatastore))
+	r.Post("/", CreateDonation(res.DonationDataStore))
+	r.Put("/{donationID}/accept", AcceptDonation(res.DonationDataStore, res.StockDataStore))
 
 	return r
 }
@@ -49,6 +51,25 @@ func CreateDonation(repo interface {
 		}
 
 		render.JSON(w, r, request)
+	}
+}
+
+// AcceptDonation accepts donation by given id.
+func AcceptDonation(
+	donationRepo interface{ model.HasAcceptDonation },
+	stockRepo interface{ model.HasCreateOrUpdateStock },
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		donationID := chi.URLParam(r, "donationID")
+		if donationID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		if err := donationRepo.AcceptDonation(r.Context(), donationID, stockRepo); err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
 	}
 }
 
