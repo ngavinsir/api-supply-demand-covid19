@@ -51,3 +51,14 @@
         ]
     }
     ```
+
+# Accept Donation
+
+* Endpoint: `/api/v1/donations/{donationID}/accept`
+* HTTP Method: `PUT`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer jwt`
+* Request Body: `-`
+* Response Body: `-`
