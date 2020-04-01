@@ -21,6 +21,7 @@ func (res *RequestResource) router() *chi.Mux {
 	r.Use(AuthMiddleware)
 	r.Use(UserCtx(res.userDatastore))
 	r.Post("/", CreateRequest(res.requestDatastore))
+	r.With(PaginationCtx).Get("/", GetAllRequest(res.requestDatastore))
 	
 	return r
 }
@@ -50,6 +51,26 @@ func CreateRequest(repo interface {model.HasCreateRequest}) http.HandlerFunc {
 	}
 }
 
+// GetAllRequest gets all requests.
+func GetAllRequest(repo interface { model.HasGetAllRequest }) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		paging, _ := r.Context().Value(PageCtxKey).(*Paging)
+
+		requestData, totalCount, err := repo.GetAllRequest(r.Context(), paging.Offset(), paging.Size)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+
+		requestDataPage := &RequestDataPage{
+			Data: requestData,
+			Pages: paging.Pages(totalCount),
+		}
+
+		render.JSON(w, r, requestDataPage)
+	}
+}
+
 // CreateRequestRequest struct
 type CreateRequestRequest struct {
 	RequestItems *models.RequestItemSlice `json:"requestItems"`
@@ -62,4 +83,10 @@ func (req *CreateRequestRequest) Bind(r *http.Request) error {
 	}
 
 	return nil
+}
+
+// RequestDataPage struct
+type RequestDataPage struct {
+	Data  []*model.RequestData `boil:"data" json:"data"`
+	Pages *Page        `boil:"pages" json:"pages"`
 }

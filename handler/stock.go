@@ -29,13 +29,23 @@ func GetAllStock(repo interface {
 	return func(w http.ResponseWriter, r *http.Request) {
 		paging, _ := r.Context().Value(PageCtxKey).(*Paging)
 
-		stockDataPage, err := repo.GetAllStock(r.Context(), paging.Page, paging.Size)
-
+		stockData, totalCount, err := repo.GetAllStock(r.Context(), paging.Offset(), paging.Size)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
 		}
 
+		stockDataPage := &StockDataPage{
+			Data: stockData,
+			Pages: paging.Pages(totalCount),
+		}
+
 		render.JSON(w, r, stockDataPage)
 	}
+}
+
+// StockDataPage struct
+type StockDataPage struct {
+	Data  []*model.StockData `boil:"data" json:"data"`
+	Pages *Page        `boil:"pages" json:"pages"`
 }
