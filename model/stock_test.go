@@ -12,11 +12,15 @@ import (
 )
 
 const (
-	testStockID     = "ID"
-	testStockItemID = "ItemID"
-	testStockUnitID = "UnitID"
-	testStockLen    = 10
+	testStockItemID1 = "ItemID1"
+	testStockUnitID1 = "UnitID1"
+	testStockItemID2 = "ItemID2"
+	testStockUnitID2 = "UnitID2"
+	testStock1Len    = 10
+	testStock2Len	 = 12
 )
+
+var testQuantity types.Decimal
 
 func TestStock(t *testing.T) {
 	db, err := database.InitTestDB()
@@ -28,34 +32,66 @@ func TestStock(t *testing.T) {
 		database.ResetTestDB(db)
 		db.Close()
 	}()
+	
+	testQuantity.Big, _ = new(decimal.Big).SetString("1.2")
 
-	t.Run("Create", testCreateStock(&StockDataStore{DB: db}))
+	t.Run("Create & Update", testCreateAndUpdateStock(&StockDataStore{DB: db}))
 }
 
-func testCreateStock(repo *StockDataStore) func(t *testing.T) {
+func testCreateAndUpdateStock(repo *StockDataStore) func(t *testing.T) {
 	return func(t *testing.T) {
 		var quantity types.Decimal
 		quantity.Big, _ = new(decimal.Big).SetString("1.5")
 
 		item := &models.Item{
-			ID:   testStockItemID,
-			Name: "name",
+			ID:   testStockItemID1,
+			Name: "name1",
 		}
 
 		item.Insert(context.Background(), repo, boil.Infer())
 
 		unit := &models.Unit{
-			ID:   testStockUnitID,
-			Name: "name",
+			ID:   testStockUnitID1,
+			Name: "name1",
 		}
 
 		unit.Insert(context.Background(), repo, boil.Infer())
 
-		for i := 0; i < testStockLen; i++ {
-			stock, err := repo.CreateNewStock(context.Background(), &models.Stock{
-				ItemID:   testStockItemID,
-				UnitID:   testStockUnitID,
-				Quantity: types.NewDecimal(&decimal.Big{}),
+		item = &models.Item{
+			ID:   testStockItemID2,
+			Name: "name2",
+		}
+
+		item.Insert(context.Background(), repo, boil.Infer())
+
+		unit = &models.Unit{
+			ID:   testStockUnitID2,
+			Name: "name2",
+		}
+
+		unit.Insert(context.Background(), repo, boil.Infer())
+
+		for i := 0; i < testStock1Len; i++ {
+			stock, err := repo.CreateOrUpdateStock(context.Background(), &models.Stock{
+				ItemID:   testStockItemID1,
+				UnitID:   testStockUnitID1,
+				Quantity: testQuantity,
+			})
+
+			if err != nil {
+				t.Error(err)
+			}
+
+			if stock.ID == "" {
+				t.Errorf("Want stock id assigned, got %s", stock.ID)
+			}
+		}
+
+		for i := 0; i < testStock2Len; i++ {
+			stock, err := repo.CreateOrUpdateStock(context.Background(), &models.Stock{
+				ItemID:   testStockItemID2,
+				UnitID:   testStockUnitID2,
+				Quantity: testQuantity,
 			})
 
 			if err != nil {
@@ -73,13 +109,35 @@ func testCreateStock(repo *StockDataStore) func(t *testing.T) {
 
 func testGetAllStock(repo *StockDataStore) func(t *testing.T) {
 	return func(t *testing.T) {
-		stocks, err := repo.GetAllStock(context.Background(), 1, 10)
+		stocks, _, err := repo.GetAllStock(context.Background(), 0, 10)
 		if err != nil {
 			t.Error(err)
 		}
 
-		if len(stocks.Data) != testStockLen {
-			t.Errorf("Want stock count %d, got %d", testStockLen, len(stocks.Data))
+		if len(stocks) != 2 {
+			t.Errorf("Want stock count %d, got %d", 2, len(stocks))
+		}
+
+		stock1, err := models.Stocks(
+			models.StockWhere.ItemID.EQ(testStockItemID1),
+		).One(context.Background(), repo.DB)
+		if err != nil {
+			t.Error(err)
+		}
+		
+		if got, want := stock1.Quantity.Big.String(), "12.00"; got != want {
+			t.Errorf("Want stock 1 quantity %s, got %s", want, got)
+		}
+
+		stock2, err := models.Stocks(
+			models.StockWhere.ItemID.EQ(testStockItemID2),
+		).One(context.Background(), repo.DB)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if got, want := stock2.Quantity.Big.String(), "14.40"; got != want {
+			t.Errorf("Want stock 2 quantity %s, got %s", want, got)
 		}
 	}
 }

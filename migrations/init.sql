@@ -165,9 +165,9 @@ create table if not exists allocation_items
 		constraint allocation_items_allocations_id_fk
 			references allocations
 				on delete cascade,
-	donation_item_id text not null
-		constraint allocation_items_donation_items_id_fk
-			references donation_items
+	item_id text not null
+		constraint allocation_items_items_id_fk
+			references items
 				on delete restrict,
 	unit_id text not null
 		constraint allocation_items_units_id_fk

@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/badoux/checkmail"
@@ -158,13 +157,10 @@ func loginLogic(ctx context.Context, repo model.HasGetUserByEmail, data *models.
 
 	_, tokenString, _ := jwtAuth.Encode(jwtClaims)
 	
+	user.Password = ""
 	loginResponse := &LoginResponse{
-		Email:         user.Email,
-		Name:          user.Name,
-		Role:          user.Role,
-		ContactPerson: user.ContactPerson.String,
-		ContactNumber: user.ContactNumber.String,
-		JWT:           tokenString,
+		User: user,
+		JWT: tokenString,
 	}
 
 	return loginResponse, nil
@@ -237,35 +233,6 @@ func UserCtx(repo interface{ model.HasGetUserByID }) func(http.Handler) http.Han
 	}
 }
 
-// PaginationCtx middleware is used to exctract page and size query param
-func PaginationCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		page, err := strconv.Atoi(r.URL.Query().Get("page"))
-		if err != nil || page < 1 {
-			page = 1
-		}
-
-		size, err := strconv.Atoi(r.URL.Query().Get("size"))
-		if err != nil || size < 1 {
-			size = 10
-		}
-
-		paging := &Paging{
-			Page: page,
-			Size: size,
-		}
-
-		ctx := context.WithValue(r.Context(), PageCtxKey, paging)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// Paging struct
-type Paging struct {
-	Page int
-	Size int
-}
-
 // RegisterRequest struct
 type RegisterRequest struct {
 	*models.User
@@ -296,10 +263,6 @@ func (req *LoginRequest) Bind(r *http.Request) error {
 
 // LoginResponse struct
 type LoginResponse struct {
-	Email         string `boil:"email" json:"email"`
-	Name          string `boil:"name" json:"name"`
-	Role          string `boil:"role" json:"role"`
-	ContactPerson string `boil:"contact_person" json:"contactPerson,omitempty"`
-	ContactNumber string `boil:"contact_number" json:"contactNumber,omitempty"`
-	JWT           string `json:"jwt"`
+	User *models.User `json:"user"`
+	JWT   string 		`json:"jwt,omitempty"`
 }

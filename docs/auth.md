@@ -15,11 +15,15 @@
 * Response Body:
     ```
     {
-        "email": "test",
-        "name": "test",
-        "role": "donator",
-        "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9eyJleHAiOjE1ODUyNTg0NzAsInVzZXJfaWQiOiIxWmc0N2RENlVydk8zSkRCY2ZJN0d1Qlo
-        2TXoifQ.V2oAHjqRt6ekSf1ULamPD87mqZp5ZsWOZqDrCchiBsg"
+        "user": {
+            "id": "1ZiESUvzPPP0r9SCTtkt84eAGfP",
+            "email": "admin",
+            "name": "admin",
+            "contact_person": null,
+            "contact_number": null,
+            "role": "ADMIN"
+        },
+        "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1ODU3NDYzNjMsInVzZXJfaWQiOiIxWmlFU1V2elBQUDByOVNDVHRrdDg0ZUFHZlAifQ.ffyS1yOhQxuIgbd2l09-Q4tBhVES7BOTOXFt88GkbUc"
     }
     ```
 

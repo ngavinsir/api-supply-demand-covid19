@@ -3,23 +3,22 @@ package model
 import (
 	"context"
 	"database/sql"
-	"math"
 
 	"github.com/ngavinsir/api-supply-demand-covid19/models"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/boil"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	. "github.com/volatiletech/sqlboiler/queries/qm"
 	"github.com/volatiletech/sqlboiler/types"
 )
 
 // HasGetAllStock handles get stock data.
 type HasGetAllStock interface {
-	GetAllStock(ctx context.Context, page int, size int) (*StockDataPage, error)
+	GetAllStock(ctx context.Context, offset int, limit int) ([]*StockData, int64, error)
 }
 
-// HasCreateNewStock handles create stock data
-type HasCreateNewStock interface {
-	CreateAllStock(ctx context.Context, stock *models.Stock) (*models.Stock, error)
+// HasCreateOrUpdateStock creates or updates stock.
+type HasCreateOrUpdateStock interface {
+	CreateOrUpdateStock(ctx context.Context, stock *models.Stock) (*models.Stock, error)
 }
 
 // StockDataStore holds db information.
@@ -28,36 +27,20 @@ type StockDataStore struct {
 }
 
 // GetAllStock returns stocks
-func (db *StockDataStore) GetAllStock(ctx context.Context, page int, size int) (*StockDataPage, error) {
-	offset := (page - 1) * size
-	limit := size
-
+func (db *StockDataStore) GetAllStock(ctx context.Context, offset int, limit int) ([]*StockData, int64, error) {
 	stocksCount, err := models.Stocks().Count(ctx, db)
 	if err != nil {
-		return nil, err
-	}
-	isLast := (int(stocksCount) - (size * page)) < size
-	isFirst := page == 1
-	totalPages := int(math.Ceil(float64(stocksCount) / float64(size)))
-	if totalPages == 0 {
-		totalPages = 1
-	}
-
-	pages := &Page{
-		Current: page,
-		Total:   totalPages,
-		First:   isFirst,
-		Last:    isLast,
+		return nil, 0, err
 	}
 
 	stocks, err := models.Stocks(
-		qm.Offset(offset),
-		qm.Limit(limit),
-		qm.Load(models.StockRels.Item),
-		qm.Load(models.StockRels.Unit),
+		Offset(offset),
+		Limit(limit),
+		Load(models.StockRels.Item),
+		Load(models.StockRels.Unit),
 	).All(ctx, db)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	stockData := []*StockData{}
@@ -70,16 +53,20 @@ func (db *StockDataStore) GetAllStock(ctx context.Context, page int, size int) (
 		}
 		stockData = append(stockData, data)
 	}
-	result := &StockDataPage{
-		Data:  stockData,
-		Pages: pages,
-	}
 
-	return result, err
+	return stockData, stocksCount, err
 }
 
-// CreateNewStock returns stock
-func (db *StockDataStore) CreateNewStock(ctx context.Context, data *models.Stock) (*models.Stock, error) {
+// CreateOrUpdateStock creates a new stock if given item id in given unit doesn't exist or otherwise
+// add given quantity to current stock. 
+func (db *StockDataStore) CreateOrUpdateStock(ctx context.Context, data *models.Stock) (*models.Stock, error) {
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelSerializable,
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	stock := &models.Stock{
 		ID:       ksuid.New().String(),
 		ItemID:   data.ItemID,
@@ -87,17 +74,38 @@ func (db *StockDataStore) CreateNewStock(ctx context.Context, data *models.Stock
 		Quantity: data.Quantity,
 	}
 
-	if err := stock.Insert(ctx, db, boil.Infer()); err != nil {
+	if data.ID != "" {
+		stock, err = models.FindStock(ctx, tx, data.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		stock.Quantity.Add(stock.Quantity.Big, data.Quantity.Big)
+	} else {
+		stocks, err := models.Stocks(
+			models.StockWhere.ItemID.EQ(data.ItemID),
+			models.StockWhere.UnitID.EQ(data.UnitID),
+		).All(ctx, tx)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		
+		if len(stocks) > 0 {
+			stock = stocks[0]
+			stock.Quantity.Add(stock.Quantity.Big, data.Quantity.Big)
+		}
+	}
+
+	if err := stock.Upsert(ctx, tx, true, []string{"id"}, boil.Infer(), boil.Infer()); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 
 	return stock, nil
-}
-
-// StockDataPage struct
-type StockDataPage struct {
-	Data  []*StockData `boil:"data" json:"data"`
-	Pages *Page        `boil:"pages" json:"pages"`
 }
 
 // StockData struct
@@ -108,10 +116,3 @@ type StockData struct {
 	Quantity types.Decimal `boil:"quantity" json:"quantity"`
 }
 
-// Page struct
-type Page struct {
-	Current int  `boil:"current" json:"current"`
-	Total   int  `boil:"total" json:"total"`
-	First   bool `boil:"first" json:"first"`
-	Last    bool `boil:"last" json:"last"`
-}

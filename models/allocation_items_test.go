@@ -545,32 +545,32 @@ func testAllocationItemToOneAllocationUsingAllocation(t *testing.T) {
 	}
 }
 
-func testAllocationItemToOneDonationItemUsingDonationItem(t *testing.T) {
+func testAllocationItemToOneItemUsingItem(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
 
 	var local AllocationItem
-	var foreign DonationItem
+	var foreign Item
 
 	seed := randomize.NewSeed()
 	if err := randomize.Struct(seed, &local, allocationItemDBTypes, false, allocationItemColumnsWithDefault...); err != nil {
 		t.Errorf("Unable to randomize AllocationItem struct: %s", err)
 	}
-	if err := randomize.Struct(seed, &foreign, donationItemDBTypes, false, donationItemColumnsWithDefault...); err != nil {
-		t.Errorf("Unable to randomize DonationItem struct: %s", err)
+	if err := randomize.Struct(seed, &foreign, itemDBTypes, false, itemColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize Item struct: %s", err)
 	}
 
 	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	local.DonationItemID = foreign.ID
+	local.ItemID = foreign.ID
 	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	check, err := local.DonationItem().One(ctx, tx)
+	check, err := local.Item().One(ctx, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -580,18 +580,18 @@ func testAllocationItemToOneDonationItemUsingDonationItem(t *testing.T) {
 	}
 
 	slice := AllocationItemSlice{&local}
-	if err = local.L.LoadDonationItem(ctx, tx, false, (*[]*AllocationItem)(&slice), nil); err != nil {
+	if err = local.L.LoadItem(ctx, tx, false, (*[]*AllocationItem)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.DonationItem == nil {
+	if local.R.Item == nil {
 		t.Error("struct should have been eager loaded")
 	}
 
-	local.R.DonationItem = nil
-	if err = local.L.LoadDonationItem(ctx, tx, true, &local, nil); err != nil {
+	local.R.Item = nil
+	if err = local.L.LoadItem(ctx, tx, true, &local, nil); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.DonationItem == nil {
+	if local.R.Item == nil {
 		t.Error("struct should have been eager loaded")
 	}
 }
@@ -704,7 +704,7 @@ func testAllocationItemToOneSetOpAllocationUsingAllocation(t *testing.T) {
 		}
 	}
 }
-func testAllocationItemToOneSetOpDonationItemUsingDonationItem(t *testing.T) {
+func testAllocationItemToOneSetOpItemUsingItem(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
@@ -712,16 +712,16 @@ func testAllocationItemToOneSetOpDonationItemUsingDonationItem(t *testing.T) {
 	defer func() { _ = tx.Rollback() }()
 
 	var a AllocationItem
-	var b, c DonationItem
+	var b, c Item
 
 	seed := randomize.NewSeed()
 	if err = randomize.Struct(seed, &a, allocationItemDBTypes, false, strmangle.SetComplement(allocationItemPrimaryKeyColumns, allocationItemColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
-	if err = randomize.Struct(seed, &b, donationItemDBTypes, false, strmangle.SetComplement(donationItemPrimaryKeyColumns, donationItemColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &b, itemDBTypes, false, strmangle.SetComplement(itemPrimaryKeyColumns, itemColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
-	if err = randomize.Struct(seed, &c, donationItemDBTypes, false, strmangle.SetComplement(donationItemPrimaryKeyColumns, donationItemColumnsWithoutDefault)...); err != nil {
+	if err = randomize.Struct(seed, &c, itemDBTypes, false, strmangle.SetComplement(itemPrimaryKeyColumns, itemColumnsWithoutDefault)...); err != nil {
 		t.Fatal(err)
 	}
 
@@ -732,32 +732,32 @@ func testAllocationItemToOneSetOpDonationItemUsingDonationItem(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for i, x := range []*DonationItem{&b, &c} {
-		err = a.SetDonationItem(ctx, tx, i != 0, x)
+	for i, x := range []*Item{&b, &c} {
+		err = a.SetItem(ctx, tx, i != 0, x)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if a.R.DonationItem != x {
+		if a.R.Item != x {
 			t.Error("relationship struct not set to correct value")
 		}
 
 		if x.R.AllocationItems[0] != &a {
 			t.Error("failed to append to foreign relationship struct")
 		}
-		if a.DonationItemID != x.ID {
-			t.Error("foreign key was wrong value", a.DonationItemID)
+		if a.ItemID != x.ID {
+			t.Error("foreign key was wrong value", a.ItemID)
 		}
 
-		zero := reflect.Zero(reflect.TypeOf(a.DonationItemID))
-		reflect.Indirect(reflect.ValueOf(&a.DonationItemID)).Set(zero)
+		zero := reflect.Zero(reflect.TypeOf(a.ItemID))
+		reflect.Indirect(reflect.ValueOf(&a.ItemID)).Set(zero)
 
 		if err = a.Reload(ctx, tx); err != nil {
 			t.Fatal("failed to reload", err)
 		}
 
-		if a.DonationItemID != x.ID {
-			t.Error("foreign key was wrong value", a.DonationItemID, x.ID)
+		if a.ItemID != x.ID {
+			t.Error("foreign key was wrong value", a.ItemID, x.ID)
 		}
 	}
 }
@@ -893,7 +893,7 @@ func testAllocationItemsSelect(t *testing.T) {
 }
 
 var (
-	allocationItemDBTypes = map[string]string{`ID`: `text`, `AllocationID`: `text`, `DonationItemID`: `text`, `UnitID`: `text`, `Quantity`: `numeric`}
+	allocationItemDBTypes = map[string]string{`ID`: `text`, `AllocationID`: `text`, `ItemID`: `text`, `UnitID`: `text`, `Quantity`: `numeric`}
 	_                     = bytes.MinRead
 )
 
