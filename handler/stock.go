@@ -56,7 +56,7 @@ func CreateOrUpdateStock(repo interface{ model.HasCreateOrUpdateStock }) http.Ha
 			return
 		}
 
-		stock, err := repo.CreateOrUpdateStock(r.Context(), data.Stock)
+		stock, err := repo.CreateOrUpdateStock(r.Context(), data.Stock, nil)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
