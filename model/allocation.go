@@ -19,7 +19,10 @@ type HasCreateAllocation interface {
 		ctx context.Context,
 		allocation *models.Allocation,
 		allocationItems []*models.AllocationItem,
-		stockRepo interface{ HasIsStockAvailable },
+		stockRepo interface {
+			HasIsStockAvailable
+			HasCreateOrUpdateStock
+		},
 	) (*AllocationData, error)
 }
 
@@ -33,7 +36,7 @@ func (db *AllocationDatastore) CreateAllocation(
 	ctx context.Context,
 	allocation *models.Allocation,
 	allocationItems []*models.AllocationItem,
-	stockRepo interface{ 
+	stockRepo interface {
 		HasIsStockAvailable
 		HasCreateOrUpdateStock
 	},
@@ -64,17 +67,17 @@ func (db *AllocationDatastore) CreateAllocation(
 				resultChan <- struct {
 					*models.AllocationItem
 					error
-				}{nil, fmt.Errorf("stock not available for %+v", item)}
+				}{nil, fmt.Errorf("stock not available for item with id %s", item.ItemID)}
 				return
 			}
-			
+
 			var negQuantity types.Decimal
 			negQuantity.Big = &decimal.Big{}
 			negQuantity.Big.Neg(item.Quantity.Big)
 			_, err = stockRepo.CreateOrUpdateStock(ctx,
 				&models.Stock{
-					ItemID: item.ItemID,
-					UnitID: item.UnitID,
+					ItemID:   item.ItemID,
+					UnitID:   item.UnitID,
 					Quantity: negQuantity,
 				},
 				tx,
@@ -146,7 +149,7 @@ type AllocationData struct {
 	RequestID       string                `json:"requestID"`
 	AdminID         string                `json:"adminID"`
 	PhotoURL        string                `json:"photoUrl"`
-	AllocationItems []*AllocationItemData `json:"allocationItems"`
+	AllocationItems []*AllocationItemData `json:"items"`
 }
 
 // AllocationItemData struct

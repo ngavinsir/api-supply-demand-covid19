@@ -10,12 +10,13 @@ import (
 
 // API provides application resources and handlers.
 type API struct {
-	authResource     *AuthResource
-	unitResource     *UnitResource
-	stockResource    *StockResource
-	requestResource  *RequestResource
-	itemResource     *ItemResource
-	donationResource *DonationResource
+	authResource       *AuthResource
+	unitResource       *UnitResource
+	stockResource      *StockResource
+	requestResource    *RequestResource
+	itemResource       *ItemResource
+	donationResource   *DonationResource
+	allocationResource *AllocationResource
 }
 
 // NewAPI configures and returns application API.
@@ -24,15 +25,16 @@ func NewAPI(db *sql.DB) *API {
 	unitDatastore := &model.UnitDatastore{DB: db}
 	requestDatastore := &model.RequestDatastore{DB: db}
 	itemDatastore := &model.ItemDatastore{DB: db}
-	stockDataStore := &model.StockDataStore{DB: db}
-	donationDataStore := &model.DonationDataStore{DB: db}
+	stockDatastore := &model.StockDataStore{DB: db}
+	donationDatastore := &model.DonationDataStore{DB: db}
+	allocationDatastore := &model.AllocationDatastore{DB: db}
 
 	authResource := &AuthResource{UserDatastore: userDatastore}
 	unitResource := &UnitResource{
 		UnitDatastore: unitDatastore,
 		UserDatastore: userDatastore,
 	}
-	stockResource := &StockResource{StockDataStore: stockDataStore}
+	stockResource := &StockResource{StockDataStore: stockDatastore}
 	requestResource := &RequestResource{
 		requestDatastore: requestDatastore,
 		userDatastore:    userDatastore,
@@ -42,17 +44,23 @@ func NewAPI(db *sql.DB) *API {
 		UserDatastore: userDatastore,
 	}
 	donationResource := &DonationResource{
-		DonationDataStore: donationDataStore,
+		DonationDataStore: donationDatastore,
 		UserDatastore:     userDatastore,
+	}
+	allocationResource := &AllocationResource{
+		AllocationDatastore: allocationDatastore,
+		StockDataStore:      stockDatastore,
+		UserDatastore:       userDatastore,
 	}
 
 	api := &API{
-		authResource:     authResource,
-		unitResource:     unitResource,
-		stockResource:    stockResource,
-		requestResource:  requestResource,
-		itemResource:     itemResource,
-		donationResource: donationResource,
+		authResource:       authResource,
+		unitResource:       unitResource,
+		stockResource:      stockResource,
+		requestResource:    requestResource,
+		itemResource:       itemResource,
+		donationResource:   donationResource,
+		allocationResource: allocationResource,
 	}
 
 	return api
@@ -72,12 +80,13 @@ func (api *API) Router() *chi.Mux {
 	r.Mount("/requests", api.requestResource.router())
 	r.Mount("/items", api.itemResource.router())
 	r.Mount("/donations", api.donationResource.router())
+	r.Mount("/allocations", api.allocationResource.router())
 
 	return r
 }
 
 // Cmd handles command from terminal.
-func (api *API) Cmd(args []string) {	
+func (api *API) Cmd(args []string) {
 	api.authResource.cmd(args)
 }
 
