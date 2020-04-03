@@ -93,6 +93,7 @@ func TestRequest(t *testing.T) {
 	t.Run("Create", testCreateRequest(&RequestDatastore{DB: db}, unit.ID, item.ID, user.ID))
 	t.Run("Update", testUpdateRequest(&RequestDatastore{DB: db}, unit2.ID, item2.ID, user.ID))
 	t.Run("UpdateWhenFulfilled", testUpdateRequestWhenFulfilled(&RequestDatastore{DB: db}, unit.ID, item.ID, user.ID))
+	t.Run("Get", testGetRequest(&RequestDatastore{DB: db}, unit.ID, item.ID, user))
 }
 
 func testCreateRequest(repo *RequestDatastore, unitID string, itemID string, userID string) func(t *testing.T) {
@@ -239,5 +240,53 @@ func testUpdateRequestWhenFulfilled(repo *RequestDatastore, unitID string, itemI
 			t.Errorf("Want error, got success")
 		}
 
+	}
+
+}
+
+func testGetRequest(repo *RequestDatastore, unitID string, itemID string, user *models.User) func(t *testing.T) {
+	return func(t *testing.T) {
+		var quantity types.Decimal
+		quantity.Big, _ = new(decimal.Big).SetString("25.5")
+
+		var requestItems []*models.RequestItem
+		requestItems = append(requestItems, &models.RequestItem{
+			ID:       ksuid.New().String(),
+			UnitID:   unitID,
+			ItemID:   itemID,
+			Quantity: quantity,
+		})
+
+		requestData, err := repo.CreateRequest(
+			context.Background(),
+			requestItems,
+			user.ID,
+		)
+		if err != nil {
+			t.Error(err)
+		}
+
+		requestID := requestData.ID
+		request, err := repo.GetRequest(context.Background(), user, requestID)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if got, want := request.ID, requestID; got != want {
+			t.Errorf("Want request id %s, got %s", want, got)
+		}
+
+		if got, want := request.DonationApplicant.ID, user.ID; got != want {
+			t.Errorf("Want request applicant id %s, got %s", want, got)
+		}
+
+		if got, want := request.RequestItems[0].ID, requestItems[0].ID; got != want {
+			t.Errorf("Want request item id %s, got %s", want, got)
+		}
+
+		_, err = repo.GetRequest(context.Background(), user, "randomUserID")
+		if err == nil {
+			t.Errorf("want error, got success")
+		}
 	}
 }
