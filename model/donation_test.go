@@ -39,6 +39,7 @@ func TestDonation(t *testing.T) {
 
 	t.Run("Create", testCreateDonation(&DonationDataStore{DB: db}, &StockDataStore{DB: db}))
 	t.Run("Update", testUpdateDonation(&DonationDataStore{DB: db}))
+	t.Run("Get", testGetDonation(&DonationDataStore{DB: db}))
 }
 
 func testCreateDonation(repo *DonationDataStore, stockRepo *StockDataStore) func(t *testing.T) {
@@ -223,6 +224,60 @@ func testAcceptDonation(repo *DonationDataStore, stockRepo *StockDataStore, dona
 
 		if got, want := stock.Quantity.Big.String(), testDonationStockCount; got != want {
 			t.Errorf("Want stock quantity %s, got %s", want, got)
+		}
+	}
+}
+
+func testGetDonation(repo *DonationDataStore) func(t *testing.T) {
+	return func(t *testing.T) {
+		donations, err := models.Donations(
+			qm.Load(models.DonationRels.Donator),
+			qm.Load(models.DonationRels.DonationItems),
+		).All(context.Background(), repo)
+		if err != nil {
+			t.Error(err)
+		}
+
+		donationID := donations[0].ID
+		donator := donations[0].R.Donator
+
+		donation, err := repo.GetDonation(context.Background(), donationID, donator)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if got, want := donation.Donation.ID, donationID; got != want {
+			t.Errorf("Want donation id %s, got %s", want, got)
+		}
+
+		if got, want := donation.Donation.DonatorID, donator.ID; got != want {
+			t.Errorf("Want donation donator id %s, got %s", want, got)
+		}
+
+		if got, want := len(donation.Items), len(donations[0].R.DonationItems); got != want {
+			t.Errorf("Want donation items length %d, got %d", want, got)
+		}
+
+		// Check not found error
+		_, err = repo.GetDonation(context.Background(), "randomDonationID", donator)
+		if err == nil {
+			t.Errorf("Want error, got success")
+		}
+
+		// Check unauthorized error
+		donator.ID = "randomUserID"
+		donator.Role = "DONATOR"
+		_, err = repo.GetDonation(context.Background(), donationID, donator)
+		if err == nil {
+			t.Errorf("Want error, got success")
+		}
+
+		// Check if admin
+		donator.ID = "randomUserID"
+		donator.Role = "ADMIN"
+		_, err = repo.GetDonation(context.Background(), donationID, donator)
+		if err != nil {
+			t.Errorf("Want success, got error")
 		}
 	}
 }
