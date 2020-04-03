@@ -76,7 +76,7 @@ func testCreateAndUpdateStock(repo *StockDataStore) func(t *testing.T) {
 				ItemID:   testStockItemID1,
 				UnitID:   testStockUnitID1,
 				Quantity: testQuantity,
-			})
+			}, nil)
 
 			if err != nil {
 				t.Error(err)
@@ -92,7 +92,7 @@ func testCreateAndUpdateStock(repo *StockDataStore) func(t *testing.T) {
 				ItemID:   testStockItemID2,
 				UnitID:   testStockUnitID2,
 				Quantity: testQuantity,
-			})
+			}, nil)
 
 			if err != nil {
 				t.Error(err)
@@ -104,6 +104,7 @@ func testCreateAndUpdateStock(repo *StockDataStore) func(t *testing.T) {
 		}
 
 		t.Run("Get all stock", testGetAllStock(repo))
+		t.Run("Is available", testIsAvailableStock(repo))
 	}
 }
 
@@ -138,6 +139,55 @@ func testGetAllStock(repo *StockDataStore) func(t *testing.T) {
 
 		if got, want := stock2.Quantity.Big.String(), "14.40"; got != want {
 			t.Errorf("Want stock 2 quantity %s, got %s", want, got)
+		}
+	}
+}
+
+func testIsAvailableStock(repo *StockDataStore) func(t *testing.T) {
+	return func(t *testing.T) {
+		var testAvailableQuantity types.Decimal
+		testAvailableQuantity.Big, _ = new(decimal.Big).SetString("13.00")
+
+		stock1, err := models.Stocks(
+			models.StockWhere.ItemID.EQ(testStockItemID1),
+		).One(context.Background(), repo.DB)
+		if err != nil {
+			t.Error(err)
+		}
+		
+		isAvailable, err := repo.IsStockAvailable(
+			context.Background(), 
+			stock1.ItemID, 
+			stock1.UnitID,
+			testAvailableQuantity,
+		)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if got, want := isAvailable, false; got != want {
+			t.Errorf("Want stock 1 not to be available, got %v", got)
+		}
+
+		stock2, err := models.Stocks(
+			models.StockWhere.ItemID.EQ(testStockItemID2),
+		).One(context.Background(), repo.DB)
+		if err != nil {
+			t.Error(err)
+		}
+
+		isAvailable, err = repo.IsStockAvailable(
+			context.Background(), 
+			stock2.ItemID, 
+			stock2.UnitID,
+			testAvailableQuantity,
+		)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if got, want := isAvailable, true; got != want {
+			t.Errorf("Want stock 2 to be available, got %v", got)
 		}
 	}
 }
