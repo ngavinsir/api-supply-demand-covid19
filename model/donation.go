@@ -27,6 +27,11 @@ type HasAcceptDonation interface {
 	AcceptDonation(ctx context.Context, donationID string, stockRepo interface{ HasCreateOrUpdateStock }) error
 }
 
+// HasGetDonation handles get donation detail
+type HasGetDonation interface {
+	GetDonation(ctx context.Context, donationID string, donator *models.User) (*DonationData, error)
+}
+
 // DonationDataStore holds db information.
 type DonationDataStore struct {
 	*sql.DB
@@ -164,6 +169,32 @@ func (db *DonationDataStore) AcceptDonation(
 	}
 
 	return nil
+}
+
+// GetDonation handles get donation detail by given id
+func (db *DonationDataStore) GetDonation(
+	ctx context.Context,
+	donationID string,
+	donator *models.User,
+) (*DonationData, error) {
+	donation, err := models.Donations(
+		models.DonationWhere.ID.EQ(donationID),
+		Load(models.DonationRels.DonationItems),
+	).One(ctx, db)
+	if err != nil {
+		return nil, errors.New("donation id not found")
+	}
+
+	if donator.Role != "ADMIN" && donator.ID != donation.DonatorID {
+		return nil, errors.New("unauthorized")
+	}
+
+	donationData := &DonationData{
+		Donation: donation,
+		Items:    donation.R.DonationItems,
+	}
+
+	return donationData, nil
 }
 
 // DonationData struct
