@@ -32,7 +32,7 @@ func (res *UnitResource) router() *chi.Mux {
 }
 
 // GetAllUnit gets all unit.
-func GetAllUnit(repo interface {model.HasGetAllUnit}) http.HandlerFunc {
+func GetAllUnit(repo interface{ model.HasGetAllUnit }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		units, err := repo.GetAllUnit(r.Context())
 		if err != nil {
@@ -45,7 +45,7 @@ func GetAllUnit(repo interface {model.HasGetAllUnit}) http.HandlerFunc {
 }
 
 // CreateUnit creates new unit.
-func CreateUnit(repo interface {model.HasCreateUnit}) http.HandlerFunc {
+func CreateUnit(repo interface{ model.HasCreateUnit }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := &CreateUnitRequest{}
 		if err := render.Bind(r, data); err != nil {
@@ -70,7 +70,7 @@ func CreateUnit(repo interface {model.HasCreateUnit}) http.HandlerFunc {
 }
 
 // DeleteUnit deletes unit by given id.
-func DeleteUnit(repo interface {model.HasDeleteUnit}) http.HandlerFunc {
+func DeleteUnit(repo interface{ model.HasDeleteUnit }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		unitID := chi.URLParam(r, "unitID")
 		if unitID == "" {

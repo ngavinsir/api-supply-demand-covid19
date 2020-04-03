@@ -11,7 +11,7 @@ import (
 var (
 	ErrInvalidUserID    = errors.New("INVALID_USER_ID")
 	ErrMissingReqFields = errors.New("MISSING_REQUEST_FIELDS")
-	ErrInvalidRole		= errors.New("INVALID_ROLE")
+	ErrInvalidRole      = errors.New("INVALID_ROLE")
 )
 
 // ErrResponse contains err, http_status_code, status_text, app_code, error_text

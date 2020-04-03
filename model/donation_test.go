@@ -22,8 +22,8 @@ const (
 	testDonationUserID      = "UserID"
 	testDonationItemsLen    = 100
 	testDonationCount       = 15
-	testDonationStockCount	= "150.00"
-	testDonationQuantity  	= "1.5"
+	testDonationStockCount  = "150.00"
+	testDonationQuantity    = "1.5"
 )
 
 func TestDonation(t *testing.T) {
@@ -212,7 +212,7 @@ func testAcceptDonation(repo *DonationDataStore, stockRepo *StockDataStore, dona
 
 		if got, want := donation.IsAccepted, true; got != want {
 			t.Errorf("Want donation is accepted, got %v", got)
-		} 
+		}
 
 		stock, err := models.Stocks(
 			models.StockWhere.ItemID.EQ(testDonationItemItemID),

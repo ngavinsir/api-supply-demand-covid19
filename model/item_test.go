@@ -80,7 +80,7 @@ func testGetAllItem(repo *ItemDatastore) func(t *testing.T) {
 func testDeleteItem(repo *ItemDatastore, itemIDs []string) func(t *testing.T) {
 	return func(t *testing.T) {
 		var wg sync.WaitGroup
-		
+
 		for _, itemID := range itemIDs {
 			wg.Add(1)
 			go func(itemID string) {

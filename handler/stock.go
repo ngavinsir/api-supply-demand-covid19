@@ -79,8 +79,8 @@ type StockRequest struct {
 
 // Bind StockRequest
 func (req *StockRequest) Bind(r *http.Request) error {
-	if req.Stock == nil || req.Stock.Quantity.Big.Cmp(&decimal.Big{}) == 0 || 
-	(req.Stock.ID == "" && (req.Stock.ItemID == "" || req.Stock.UnitID == "")) {
+	if req.Stock == nil || req.Stock.Quantity.Big.Cmp(&decimal.Big{}) == 0 ||
+		(req.Stock.ID == "" && (req.Stock.ItemID == "" || req.Stock.UnitID == "")) {
 		return ErrMissingReqFields
 	}
 

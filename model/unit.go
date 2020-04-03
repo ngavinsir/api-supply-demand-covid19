@@ -32,7 +32,7 @@ type UnitDatastore struct {
 // CreateUnit creates a new unit with given unique name.
 func (db *UnitDatastore) CreateUnit(ctx context.Context, name string) (*models.Unit, error) {
 	unit := &models.Unit{
-		ID: ksuid.New().String(),
+		ID:   ksuid.New().String(),
 		Name: name,
 	}
 	err := unit.Insert(ctx, db, boil.Infer())
@@ -56,6 +56,6 @@ func (db *UnitDatastore) GetAllUnit(ctx context.Context) (*models.UnitSlice, err
 // DeleteUnit deletes unit by given id.
 func (db *UnitDatastore) DeleteUnit(ctx context.Context, unitID string) error {
 	_, err := models.Units(models.UnitWhere.ID.EQ(unitID)).DeleteAll(ctx, db)
-	
+
 	return err
 }

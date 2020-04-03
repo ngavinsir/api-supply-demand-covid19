@@ -32,7 +32,7 @@ type ItemDatastore struct {
 // CreateItem creates a new item with given unique name.
 func (db *ItemDatastore) CreateItem(ctx context.Context, name string) (*models.Item, error) {
 	item := &models.Item{
-		ID: ksuid.New().String(),
+		ID:   ksuid.New().String(),
 		Name: name,
 	}
 	err := item.Insert(ctx, db, boil.Infer())
@@ -56,6 +56,6 @@ func (db *ItemDatastore) GetAllItem(ctx context.Context) (*models.ItemSlice, err
 // DeleteItem deletes item by given id.
 func (db *ItemDatastore) DeleteItem(ctx context.Context, itemID string) error {
 	_, err := models.Items(models.ItemWhere.ID.EQ(itemID)).DeleteAll(ctx, db)
-	
+
 	return err
 }

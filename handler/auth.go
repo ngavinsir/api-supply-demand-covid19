@@ -49,20 +49,20 @@ func (res *AuthResource) router() *chi.Mux {
 	r.Post("/login", Login(res.UserDatastore))
 	r.Post("/register", Register(res.UserDatastore))
 	r.With(AuthMiddleware).Post("/refresh", RefreshToken)
-	
+
 	return r
 }
 
 func (res *AuthResource) cmd(args []string) {
 	// admin {email} {password}
 	loginResponse, err := registerLogic(
-		context.Background(), 
+		context.Background(),
 		res.UserDatastore,
 		&models.User{
-			Email: args[0],
-			Name: args[0],
+			Email:    args[0],
+			Name:     args[0],
 			Password: args[1],
-			Role: model.RoleAdmin,
+			Role:     model.RoleAdmin,
 		},
 	)
 	if err != nil {
@@ -156,11 +156,11 @@ func loginLogic(ctx context.Context, repo model.HasGetUserByEmail, data *models.
 	jwtClaims["exp"] = jwtauth.ExpireIn(3 * time.Hour)
 
 	_, tokenString, _ := jwtAuth.Encode(jwtClaims)
-	
+
 	user.Password = ""
 	loginResponse := &LoginResponse{
 		User: user,
-		JWT: tokenString,
+		JWT:  tokenString,
 	}
 
 	return loginResponse, nil
@@ -264,5 +264,5 @@ func (req *LoginRequest) Bind(r *http.Request) error {
 // LoginResponse struct
 type LoginResponse struct {
 	User *models.User `json:"user"`
-	JWT   string 		`json:"jwt,omitempty"`
+	JWT  string       `json:"jwt,omitempty"`
 }

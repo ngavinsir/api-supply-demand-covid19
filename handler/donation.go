@@ -21,7 +21,7 @@ func (res *DonationResource) router() *chi.Mux {
 
 	r.Use(AuthMiddleware)
 	r.Use(UserCtx(res.UserDatastore))
-	
+
 	r.Post("/", CreateOrUpdateDonation(res.DonationDataStore, model.CreateAction))
 	r.Put("/", CreateOrUpdateDonation(res.DonationDataStore, model.UpdateAction))
 	r.Put("/{donationID}/accept", AcceptDonation(res.DonationDataStore, res.StockDataStore))

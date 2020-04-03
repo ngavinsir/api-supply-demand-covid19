@@ -24,7 +24,7 @@ type HasCreateOrUpdate interface {
 
 // HasAcceptDonation accepts donation by given id.
 type HasAcceptDonation interface {
-	AcceptDonation(ctx context.Context, donationID string, stockRepo interface{ HasCreateOrUpdateStock }) (error)
+	AcceptDonation(ctx context.Context, donationID string, stockRepo interface{ HasCreateOrUpdateStock }) error
 }
 
 // DonationDataStore holds db information.
@@ -113,8 +113,8 @@ func (db *DonationDataStore) CreateOrUpdateDonation(
 
 // AcceptDonation accepts donation by given id
 func (db *DonationDataStore) AcceptDonation(
-	ctx context.Context, 
-	donationID string, 
+	ctx context.Context,
+	donationID string,
 	stockRepo interface{ HasCreateOrUpdateStock },
 ) error {
 	tx, err := db.BeginTx(ctx, &sql.TxOptions{
@@ -147,10 +147,10 @@ func (db *DonationDataStore) AcceptDonation(
 
 	for _, donationItem := range donation.R.DonationItems {
 		_, err := stockRepo.CreateOrUpdateStock(ctx, &models.Stock{
-			ItemID: donationItem.ItemID,
-			UnitID: donationItem.UnitID,
+			ItemID:   donationItem.ItemID,
+			UnitID:   donationItem.UnitID,
 			Quantity: donationItem.Quantity,
-		})
+		}, tx)
 
 		if err != nil {
 			tx.Rollback()

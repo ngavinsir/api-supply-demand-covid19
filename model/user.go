@@ -12,9 +12,9 @@ import (
 
 // User role enum
 const (
-	RoleDonator = "DONATOR"
+	RoleDonator   = "DONATOR"
 	RoleApplicant = "APPLICANT"
-	RoleAdmin = "ADMIN"
+	RoleAdmin     = "ADMIN"
 )
 
 // HasCreateNewUser handles new user creation.

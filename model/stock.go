@@ -63,7 +63,7 @@ func (db *StockDataStore) GetAllStock(ctx context.Context, offset int, limit int
 }
 
 // CreateOrUpdateStock creates a new stock if given item id in given unit doesn't exist or otherwise
-// add given quantity to current stock. 
+// add given quantity to current stock.
 func (db *StockDataStore) CreateOrUpdateStock(ctx context.Context, data *models.Stock, parentTx *sql.Tx) (*models.Stock, error) {
 	var err error
 	var tx *sql.Tx
@@ -102,7 +102,7 @@ func (db *StockDataStore) CreateOrUpdateStock(ctx context.Context, data *models.
 			tx.Rollback()
 			return nil, err
 		}
-		
+
 		if len(stocks) > 0 {
 			stock = stocks[0]
 			stock.Quantity.Add(stock.Quantity.Big, data.Quantity.Big)
@@ -145,4 +145,3 @@ type StockData struct {
 	Unit     string        `boil:"unit" json:"unit"`
 	Quantity types.Decimal `boil:"quantity" json:"quantity"`
 }
-

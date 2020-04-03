@@ -17,7 +17,7 @@ const (
 	testStockItemID2 = "ItemID2"
 	testStockUnitID2 = "UnitID2"
 	testStock1Len    = 10
-	testStock2Len	 = 12
+	testStock2Len    = 12
 )
 
 var testQuantity types.Decimal
@@ -32,7 +32,7 @@ func TestStock(t *testing.T) {
 		database.ResetTestDB(db)
 		db.Close()
 	}()
-	
+
 	testQuantity.Big, _ = new(decimal.Big).SetString("1.2")
 
 	t.Run("Create & Update", testCreateAndUpdateStock(&StockDataStore{DB: db}))
@@ -125,7 +125,7 @@ func testGetAllStock(repo *StockDataStore) func(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		
+
 		if got, want := stock1.Quantity.Big.String(), "12.00"; got != want {
 			t.Errorf("Want stock 1 quantity %s, got %s", want, got)
 		}
@@ -154,10 +154,10 @@ func testIsAvailableStock(repo *StockDataStore) func(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		
+
 		isAvailable, err := repo.IsStockAvailable(
-			context.Background(), 
-			stock1.ItemID, 
+			context.Background(),
+			stock1.ItemID,
 			stock1.UnitID,
 			testAvailableQuantity,
 		)
@@ -177,8 +177,8 @@ func testIsAvailableStock(repo *StockDataStore) func(t *testing.T) {
 		}
 
 		isAvailable, err = repo.IsStockAvailable(
-			context.Background(), 
-			stock2.ItemID, 
+			context.Background(),
+			stock2.ItemID,
 			stock2.UnitID,
 			testAvailableQuantity,
 		)

@@ -32,7 +32,7 @@ func (res *ItemResource) router() *chi.Mux {
 }
 
 // GetAllItem gets all item.
-func GetAllItem(repo interface {model.HasGetAllItem}) http.HandlerFunc {
+func GetAllItem(repo interface{ model.HasGetAllItem }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		items, err := repo.GetAllItem(r.Context())
 		if err != nil {
@@ -45,7 +45,7 @@ func GetAllItem(repo interface {model.HasGetAllItem}) http.HandlerFunc {
 }
 
 // CreateItem creates new item.
-func CreateItem(repo interface {model.HasCreateItem}) http.HandlerFunc {
+func CreateItem(repo interface{ model.HasCreateItem }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := &CreateItemRequest{}
 		if err := render.Bind(r, data); err != nil {
@@ -70,7 +70,7 @@ func CreateItem(repo interface {model.HasCreateItem}) http.HandlerFunc {
 }
 
 // DeleteItem deletes item by given item id.
-func DeleteItem(repo interface {model.HasDeleteItem}) http.HandlerFunc {
+func DeleteItem(repo interface{ model.HasDeleteItem }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		itemID := chi.URLParam(r, "itemID")
 		if itemID == "" {

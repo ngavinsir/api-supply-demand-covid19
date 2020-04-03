@@ -36,25 +36,25 @@ func TestAllocation(t *testing.T) {
 func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore) func(t *testing.T) {
 	return func(t *testing.T) {
 		unit := &models.Unit{
-			ID: testUnitID,
+			ID:   testUnitID,
 			Name: testUnitName,
 		}
 		if err := unit.Insert(context.Background(), repo.DB, boil.Infer()); err != nil {
 			panic(err)
 		}
-	
+
 		item := &models.Item{
-			ID: testItemID,
+			ID:   testItemID,
 			Name: testItemName,
 		}
 		if err := item.Insert(context.Background(), repo.DB, boil.Infer()); err != nil {
 			panic(err)
 		}
-		
+
 		stock := &models.Stock{
-			ID: "ID",
-			ItemID: testItemID,
-			UnitID: testUnitID,
+			ID:       "ID",
+			ItemID:   testItemID,
+			UnitID:   testUnitID,
 			Quantity: testStockQuantity,
 		}
 		if err := stock.Insert(context.Background(), repo.DB, boil.Infer()); err != nil {
@@ -63,9 +63,9 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore) 
 
 		userDatastore := &UserDatastore{DB: repo.DB}
 		user, err := userDatastore.CreateNewUser(context.Background(), &models.User{
-			Email: testUserEmail,
-			Name: testUserName,
-			Role: RoleAdmin,
+			Email:    testUserEmail,
+			Name:     testUserName,
+			Role:     RoleAdmin,
 			Password: testUserPassword,
 		})
 		if err != nil {
@@ -77,9 +77,9 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore) 
 			context.Background(),
 			[]*models.RequestItem{
 				&models.RequestItem{
-					ItemID: testItemID,
+					ItemID:   testItemID,
 					Quantity: testStockQuantity,
-					UnitID: testUnitID,
+					UnitID:   testUnitID,
 				},
 			},
 			user.ID,
@@ -90,16 +90,16 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore) 
 
 		allocationItems := []*models.AllocationItem{
 			&models.AllocationItem{
-				ItemID: testItemID,
+				ItemID:   testItemID,
 				Quantity: testStockQuantity,
-				UnitID: testUnitID,
+				UnitID:   testUnitID,
 			},
 		}
 
 		allocationData, err := repo.CreateAllocation(
 			context.Background(),
 			&models.Allocation{
-				AdminID: user.ID,
+				AdminID:   user.ID,
 				RequestID: request.ID,
 			},
 			allocationItems,
@@ -126,7 +126,7 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore) 
 		_, err = repo.CreateAllocation(
 			context.Background(),
 			&models.Allocation{
-				AdminID: user.ID,
+				AdminID:   user.ID,
 				RequestID: request.ID,
 			},
 			allocationItems,
@@ -135,8 +135,8 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore) 
 		if err == nil {
 			t.Error("Want create allocation error, got no error")
 		}
-		
-		if got, want := err.Error(), fmt.Sprintf("stock not available for %+v", allocationItems[0]); got != want {
+
+		if got, want := err.Error(), fmt.Sprintf("stock not available for item with id %s", allocationItems[0].ItemID); got != want {
 			t.Errorf("Want create allocation error msg %s, got %s", want, got)
 		}
 	}
