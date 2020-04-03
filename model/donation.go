@@ -3,11 +3,13 @@ package model
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/ngavinsir/api-supply-demand-covid19/models"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/boil"
+	. "github.com/volatiletech/sqlboiler/queries/qm"
 )
 
 const (
@@ -18,6 +20,11 @@ const (
 // HasCreateOrUpdate handles get donation data.
 type HasCreateOrUpdate interface {
 	CreateOrUpdateDonation(ctx context.Context, data []*models.DonationItem, userID string, action string) (*DonationData, error)
+}
+
+// HasAcceptDonation accepts donation by given id.
+type HasAcceptDonation interface {
+	AcceptDonation(ctx context.Context, donationID string, stockRepo interface{ HasCreateOrUpdateStock }) (error)
 }
 
 // DonationDataStore holds db information.
@@ -102,6 +109,61 @@ func (db *DonationDataStore) CreateOrUpdateDonation(
 	}
 
 	return donationData, nil
+}
+
+// AcceptDonation accepts donation by given id
+func (db *DonationDataStore) AcceptDonation(
+	ctx context.Context, 
+	donationID string, 
+	stockRepo interface{ HasCreateOrUpdateStock },
+) error {
+	tx, err := db.BeginTx(ctx, &sql.TxOptions{
+		Isolation: sql.LevelSerializable,
+	})
+	if err != nil {
+		return err
+	}
+
+	donation, err := models.Donations(
+		models.DonationWhere.ID.EQ(donationID),
+		Load(models.DonationRels.DonationItems),
+	).One(ctx, tx)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if donation.IsAccepted {
+		tx.Rollback()
+		return errors.New("donation has already been accepted")
+	}
+
+	donation.IsAccepted = true
+	_, err = donation.Update(ctx, tx, boil.Infer())
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	for _, donationItem := range donation.R.DonationItems {
+		_, err := stockRepo.CreateOrUpdateStock(ctx, &models.Stock{
+			ItemID: donationItem.ItemID,
+			UnitID: donationItem.UnitID,
+			Quantity: donationItem.Quantity,
+		})
+
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }
 
 // DonationData struct

@@ -46,6 +46,7 @@ func NewAPI(db *sql.DB) *API {
 	donationResource := &DonationResource{
 		DonationDataStore: donationDatastore,
 		UserDatastore:     userDatastore,
+		StockDataStore: stockDataStore,
 	}
 	allocationResource := &AllocationResource{
 		AllocationDatastore: allocationDatastore,
