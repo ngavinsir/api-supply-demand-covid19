@@ -23,6 +23,11 @@ type HasGetAllRequest interface {
 	GetAllRequest(ctx context.Context, offset int, limit int) ([]*RequestData, int64, error)
 }
 
+// HasGetRequest handles requests retrieval.
+type HasGetRequest interface {
+	GetRequest(ctx context.Context, applicant *models.User, requestID string) (*RequestData, error)
+}
+
 // HasUpdateRequest handles update existsing requests
 type HasUpdateRequest interface {
 	UpdateRequest(ctx context.Context, requestItems []*models.RequestItem, applicantID string, requestID string) (*RequestData, error)
@@ -245,6 +250,51 @@ func (db *RequestDatastore) GetAllRequest(ctx context.Context, offset int, limit
 	}
 
 	return requestData, requestCount, nil
+}
+
+// GetRequest handles get request detail given request id and applicant id.
+func (db *RequestDatastore) GetRequest(
+	ctx context.Context,
+	applicant *models.User,
+	requestID string,
+) (*RequestData, error) {
+	request, err := models.Requests(
+		models.RequestWhere.ID.EQ(requestID),
+		Load(models.RequestRels.DonationApplicant),
+		Load(models.RequestRels.RequestItems),
+	).One(ctx, db)
+	if err != nil {
+		return nil, errors.New("request id not found")
+	}
+
+	if applicant.Role != "ADMIN" && request.DonationApplicantID != applicant.ID {
+		return nil, errors.New("unauthorized")
+	}
+
+	var requestItems []*RequestItemData
+	for _, item := range request.R.RequestItems {
+		item.L.LoadItem(ctx, db, true, item, nil)
+		item.L.LoadUnit(ctx, db, true, item, nil)
+
+		requestItemData := &RequestItemData{
+			ID:       item.ID,
+			Item:     item.R.Item.Name,
+			Unit:     item.R.Unit.Name,
+			Quantity: item.Quantity,
+		}
+
+		requestItems = append(requestItems, requestItemData)
+	}
+
+	requestData := &RequestData{
+		ID:                request.ID,
+		Date:              request.Date,
+		IsFulfilled:       request.IsFulfilled,
+		DonationApplicant: request.R.DonationApplicant,
+		RequestItems:      requestItems,
+	}
+
+	return requestData, nil
 }
 
 // RequestData struct
