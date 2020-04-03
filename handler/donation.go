@@ -24,6 +24,7 @@ func (res *DonationResource) router() *chi.Mux {
 
 	r.Post("/", CreateOrUpdateDonation(res.DonationDataStore, model.CreateAction))
 	r.Put("/", CreateOrUpdateDonation(res.DonationDataStore, model.UpdateAction))
+	r.Get("/{donationID}", GetDonation(res.DonationDataStore))
 	r.Put("/{donationID}/accept", AcceptDonation(res.DonationDataStore, res.StockDataStore))
 
 	return r
@@ -72,6 +73,31 @@ func AcceptDonation(
 			render.Render(w, r, ErrRender(err))
 			return
 		}
+	}
+}
+
+// GetDonation handles get donation detail given id.
+func GetDonation(donationRepo interface{ model.HasGetDonation }) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		donationID := chi.URLParam(r, "donationID")
+		if donationID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleDonator && user.Role != model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
+		response, err := donationRepo.GetDonation(r.Context(), donationID, user)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+
+		render.JSON(w, r, response)
 	}
 }
 
