@@ -21,6 +21,7 @@ func (res *RequestResource) router() *chi.Mux {
 	r.Use(AuthMiddleware)
 	r.Use(UserCtx(res.userDatastore))
 	r.Post("/", CreateRequest(res.requestDatastore))
+	r.Get("/{requestID}", GetRequest(res.requestDatastore))
 	r.Put("/{requestID}", UpdateRequest(res.requestDatastore))
 	r.With(PaginationCtx).Get("/", GetAllRequest(res.requestDatastore))
 
@@ -96,6 +97,27 @@ func GetAllRequest(repo interface{ model.HasGetAllRequest }) http.HandlerFunc {
 		}
 
 		render.JSON(w, r, requestDataPage)
+	}
+}
+
+// GetRequest handles get request detail
+func GetRequest(repo interface{ model.HasGetRequest }) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		requestID := chi.URLParam(r, "requestID")
+
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleApplicant && user.Role != model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
+		request, err := repo.GetRequest(r.Context(), user, requestID)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+
+		render.JSON(w, r, request)
 	}
 }
 
