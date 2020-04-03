@@ -95,3 +95,51 @@
         }
     }
     ```
+
+# Update Request
+
+* Endpoint: `/api/v1/requests/{requestID}`
+* HTTP Method: `PUT`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body:
+    ```
+    {
+        "requestItems": [
+            {
+                "item_id": "2",
+                "unit_id": "3",
+                "quantity": 11
+            },
+            {
+                "item_id": "3",
+                "unit_id": "1Zim6hXOmUTiH28xubzTz2kA0ed",
+                "quantity": 22.13
+            }
+        ]
+    }
+    ```
+* Response Body:
+    ```
+    {
+        "id": "1Zw60g0nM99QJIJjN37SpIKlYF9",
+        "date": "2020-04-01T17:39:47.940516264+07:00",
+        "isFulfilled": false,
+        "requestItems": [
+            {
+                "id": "1Zw60dckGOR6v7nIA0UofRWrWMl",
+                "item": "Masker",
+                "unit": "Buah",
+                "quantity": "11"
+            },
+            {
+                "id": "1Zw60kCOybHjxtQdXRTk6xf2cAw",
+                "item": "Hand Sanitizer",
+                "unit": "Liter",
+                "quantity": "22.13"
+            }
+        ]
+    }
+    ```

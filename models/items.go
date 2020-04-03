@@ -50,20 +50,23 @@ var ItemWhere = struct {
 
 // ItemRels is where relationship names are stored.
 var ItemRels = struct {
-	DonationItems string
-	RequestItems  string
-	Stocks        string
+	AllocationItems string
+	DonationItems   string
+	RequestItems    string
+	Stocks          string
 }{
-	DonationItems: "DonationItems",
-	RequestItems:  "RequestItems",
-	Stocks:        "Stocks",
+	AllocationItems: "AllocationItems",
+	DonationItems:   "DonationItems",
+	RequestItems:    "RequestItems",
+	Stocks:          "Stocks",
 }
 
 // itemR is where relationships are stored.
 type itemR struct {
-	DonationItems DonationItemSlice
-	RequestItems  RequestItemSlice
-	Stocks        StockSlice
+	AllocationItems AllocationItemSlice
+	DonationItems   DonationItemSlice
+	RequestItems    RequestItemSlice
+	Stocks          StockSlice
 }
 
 // NewStruct creates a new relationship struct
@@ -356,6 +359,27 @@ func (q itemQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool,
 	return count > 0, nil
 }
 
+// AllocationItems retrieves all the allocation_item's AllocationItems with an executor.
+func (o *Item) AllocationItems(mods ...qm.QueryMod) allocationItemQuery {
+	var queryMods []qm.QueryMod
+	if len(mods) != 0 {
+		queryMods = append(queryMods, mods...)
+	}
+
+	queryMods = append(queryMods,
+		qm.Where("\"allocation_items\".\"item_id\"=?", o.ID),
+	)
+
+	query := AllocationItems(queryMods...)
+	queries.SetFrom(query.Query, "\"allocation_items\"")
+
+	if len(queries.GetSelect(query.Query)) == 0 {
+		queries.SetSelect(query.Query, []string{"\"allocation_items\".*"})
+	}
+
+	return query
+}
+
 // DonationItems retrieves all the donation_item's DonationItems with an executor.
 func (o *Item) DonationItems(mods ...qm.QueryMod) donationItemQuery {
 	var queryMods []qm.QueryMod
@@ -417,6 +441,101 @@ func (o *Item) Stocks(mods ...qm.QueryMod) stockQuery {
 	}
 
 	return query
+}
+
+// LoadAllocationItems allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-M or N-M relationship.
+func (itemL) LoadAllocationItems(ctx context.Context, e boil.ContextExecutor, singular bool, maybeItem interface{}, mods queries.Applicator) error {
+	var slice []*Item
+	var object *Item
+
+	if singular {
+		object = maybeItem.(*Item)
+	} else {
+		slice = *maybeItem.(*[]*Item)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &itemR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &itemR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(qm.From(`allocation_items`), qm.WhereIn(`allocation_items.item_id in ?`, args...))
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load allocation_items")
+	}
+
+	var resultSlice []*AllocationItem
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice allocation_items")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results in eager load on allocation_items")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for allocation_items")
+	}
+
+	if len(allocationItemAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+	if singular {
+		object.R.AllocationItems = resultSlice
+		for _, foreign := range resultSlice {
+			if foreign.R == nil {
+				foreign.R = &allocationItemR{}
+			}
+			foreign.R.Item = object
+		}
+		return nil
+	}
+
+	for _, foreign := range resultSlice {
+		for _, local := range slice {
+			if local.ID == foreign.ItemID {
+				local.R.AllocationItems = append(local.R.AllocationItems, foreign)
+				if foreign.R == nil {
+					foreign.R = &allocationItemR{}
+				}
+				foreign.R.Item = local
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // LoadDonationItems allows an eager lookup of values, cached into the
@@ -701,6 +820,59 @@ func (itemL) LoadStocks(ctx context.Context, e boil.ContextExecutor, singular bo
 		}
 	}
 
+	return nil
+}
+
+// AddAllocationItems adds the given related objects to the existing relationships
+// of the item, optionally inserting them as new records.
+// Appends related to o.R.AllocationItems.
+// Sets related.R.Item appropriately.
+func (o *Item) AddAllocationItems(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*AllocationItem) error {
+	var err error
+	for _, rel := range related {
+		if insert {
+			rel.ItemID = o.ID
+			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
+				return errors.Wrap(err, "failed to insert into foreign table")
+			}
+		} else {
+			updateQuery := fmt.Sprintf(
+				"UPDATE \"allocation_items\" SET %s WHERE %s",
+				strmangle.SetParamNames("\"", "\"", 1, []string{"item_id"}),
+				strmangle.WhereClause("\"", "\"", 2, allocationItemPrimaryKeyColumns),
+			)
+			values := []interface{}{o.ID, rel.ID}
+
+			if boil.IsDebug(ctx) {
+				writer := boil.DebugWriterFrom(ctx)
+				fmt.Fprintln(writer, updateQuery)
+				fmt.Fprintln(writer, values)
+			}
+			if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+				return errors.Wrap(err, "failed to update foreign table")
+			}
+
+			rel.ItemID = o.ID
+		}
+	}
+
+	if o.R == nil {
+		o.R = &itemR{
+			AllocationItems: related,
+		}
+	} else {
+		o.R.AllocationItems = append(o.R.AllocationItems, related...)
+	}
+
+	for _, rel := range related {
+		if rel.R == nil {
+			rel.R = &allocationItemR{
+				Item: o,
+			}
+		} else {
+			rel.R.Item = o
+		}
+	}
 	return nil
 }
 

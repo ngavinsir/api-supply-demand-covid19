@@ -4,25 +4,32 @@ import (
 	"context"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/ericlagergren/decimal"
 	"github.com/ngavinsir/api-supply-demand-covid19/database"
 	"github.com/ngavinsir/api-supply-demand-covid19/models"
+	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/boil"
+	"github.com/volatiletech/sqlboiler/queries/qm"
 	"github.com/volatiletech/sqlboiler/types"
 )
 
 const (
-	testRequestCount = 15
-	testRequestItemCount = 1000
-	testUnitID = "TEST_UNIT_ID"
-	testUnitName = "TEST_UNIT_NAME"
-	testItemID = "TEST_ITEM_ID"
-	testItemName = "TEST_ITEM_NAME"
-	testUserName = "TEST_USER_NAME"
-	testUserRole = "TEST_USER_ROLE"
-	testUserEmail = "TEST_USER_EMAIL"
-	testUserPassword = "TEST_USER_PASSWORD"
+	testRequestCount     = 20
+	testRequestItemCount = 15
+	testUnitID           = "TEST_UNIT_ID"
+	testUnitID2          = "TEST_UNIT_ID_2"
+	testUnitName         = "TEST_UNIT_NAME"
+	testUnitName2        = "TEST_UNIT_NAME_2"
+	testItemID           = "TEST_ITEM_ID"
+	testItemID2          = "TEST_ITEM_ID_2"
+	testItemName         = "TEST_ITEM_NAME"
+	testItemName2        = "TEST_ITEM_NAME_2"
+	testUserName         = "TEST_USER_NAME"
+	testUserRole         = "TEST_USER_ROLE"
+	testUserEmail        = "TEST_USER_EMAIL"
+	testUserPassword     = "TEST_USER_PASSWORD"
 )
 
 func TestRequest(t *testing.T) {
@@ -35,9 +42,9 @@ func TestRequest(t *testing.T) {
 		database.ResetTestDB(db)
 		db.Close()
 	}()
-	
+
 	unit := &models.Unit{
-		ID: testUnitID,
+		ID:   testUnitID,
 		Name: testUnitName,
 	}
 	err = unit.Insert(context.Background(), db, boil.Infer())
@@ -45,8 +52,17 @@ func TestRequest(t *testing.T) {
 		panic(err)
 	}
 
+	unit2 := &models.Unit{
+		ID:   testUnitID2,
+		Name: testUnitName2,
+	}
+	err = unit2.Insert(context.Background(), db, boil.Infer())
+	if err != nil {
+		panic(err)
+	}
+
 	item := &models.Item{
-		ID: testItemID,
+		ID:   testItemID,
 		Name: testItemName,
 	}
 	err = item.Insert(context.Background(), db, boil.Infer())
@@ -54,11 +70,20 @@ func TestRequest(t *testing.T) {
 		panic(err)
 	}
 
+	item2 := &models.Item{
+		ID:   testItemID2,
+		Name: testItemName2,
+	}
+	err = item2.Insert(context.Background(), db, boil.Infer())
+	if err != nil {
+		panic(err)
+	}
+
 	userDatastore := &UserDatastore{DB: db}
 	user, err := userDatastore.CreateNewUser(context.Background(), &models.User{
-		Email: testUserEmail,
-		Name: testUserName,
-		Role: testUserRole,
+		Email:    testUserEmail,
+		Name:     testUserName,
+		Role:     testUserRole,
 		Password: testUserPassword,
 	})
 	if err != nil {
@@ -66,6 +91,8 @@ func TestRequest(t *testing.T) {
 	}
 
 	t.Run("Create", testCreateRequest(&RequestDatastore{DB: db}, unit.ID, item.ID, user.ID))
+	t.Run("Update", testUpdateRequest(&RequestDatastore{DB: db}, unit2.ID, item2.ID, user.ID))
+	t.Run("UpdateWhenFulfilled", testUpdateRequestWhenFulfilled(&RequestDatastore{DB: db}, unit.ID, item.ID, user.ID))
 }
 
 func testCreateRequest(repo *RequestDatastore, unitID string, itemID string, userID string) func(t *testing.T) {
@@ -84,16 +111,16 @@ func testCreateRequest(repo *RequestDatastore, unitID string, itemID string, use
 				var requestItems []*models.RequestItem
 				for i := 0; i < testRequestItemCount; i++ {
 					requestItem := &models.RequestItem{
-						ItemID: itemID,
+						ItemID:   itemID,
 						Quantity: quantity,
-						UnitID: unitID,
+						UnitID:   unitID,
 					}
 					requestItems = append(requestItems, requestItem)
 				}
 
 				requestData, err := repo.CreateRequest(
-					context.Background(), 
-					requestItems, 
+					context.Background(),
+					requestItems,
 					userID,
 				)
 				if err != nil {
@@ -116,5 +143,101 @@ func testCreateRequest(repo *RequestDatastore, unitID string, itemID string, use
 			}()
 		}
 		wg.Wait()
+	}
+}
+
+func testUpdateRequest(repo *RequestDatastore, unitID string, itemID string, userID string) func(t *testing.T) {
+	return func(t *testing.T) {
+		requests, err := models.Requests(qm.Load(models.RequestRels.RequestItems)).All(context.Background(), repo)
+		if err != nil {
+			t.Error(err)
+		}
+
+		for _, request := range requests {
+			var quantity types.Decimal
+			quantity.Big, _ = new(decimal.Big).SetString("25.5")
+
+			requestItems := request.R.RequestItems
+			for _, item := range requestItems {
+				item.UnitID = unitID
+				item.ItemID = itemID
+				item.Quantity = quantity
+			}
+
+			requestData, err := repo.UpdateRequest(
+				context.Background(),
+				requestItems,
+				userID,
+				request.ID,
+			)
+			if err != nil {
+				t.Error(err)
+			}
+
+			for _, item := range requestData.RequestItems {
+				if got, want := item.RequestID, request.ID; got != want {
+					t.Errorf("Want request item id %s, got %s", want, got)
+				}
+				if got, want := item.Quantity, quantity; got != want {
+					t.Errorf("Want request item quantity %s, got %s", want, got)
+				}
+				if got, want := item.Item, testItemName2; got != want {
+					t.Errorf("Want request item item name %s, got %s", want, got)
+				}
+				if got, want := item.Unit, testUnitName2; got != want {
+					t.Errorf("Want request item unit name %s, got %s", want, got)
+				}
+			}
+		}
+	}
+}
+
+func testUpdateRequestWhenFulfilled(repo *RequestDatastore, unitID string, itemID string, userID string) func(t *testing.T) {
+	return func(t *testing.T) {
+
+		request := &models.Request{
+			ID:                  ksuid.New().String(),
+			Date:                time.Now(),
+			DonationApplicantID: userID,
+			IsFulfilled:         true,
+		}
+
+		err := request.Insert(context.Background(), repo, boil.Infer())
+		if err != nil {
+			t.Error(err)
+		}
+
+		var quantity types.Decimal
+		quantity.Big, _ = new(decimal.Big).SetString("25.5")
+
+		item := &models.RequestItem{
+			ID:        ksuid.New().String(),
+			UnitID:    unitID,
+			ItemID:    itemID,
+			RequestID: request.ID,
+			Quantity:  quantity,
+		}
+
+		err = item.Insert(context.Background(), repo, boil.Infer())
+		if err != nil {
+			t.Error(err)
+		}
+		item.UnitID = testUnitID2
+		item.ItemID = testItemID2
+
+		items := []*models.RequestItem{}
+		items = append(items, item)
+
+		_, err = repo.UpdateRequest(
+			context.Background(),
+			items,
+			userID,
+			request.ID,
+		)
+
+		if err == nil {
+			t.Errorf("Want error, got success")
+		}
+
 	}
 }
