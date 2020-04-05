@@ -1,6 +1,8 @@
 package database
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -8,7 +10,8 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/source/github"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -42,20 +45,29 @@ func connect(conn string) (*sql.DB, error) {
 }
 
 func execSchema(db *sql.DB) error {
+	if err := godotenv.Load(); err != nil {
+		return err
+	}
+	githubAccessToken := os.Getenv("GITHUB_ACCESS_TOKEN")
+	if githubAccessToken == "" {
+		return errors.New("github access token not set")
+	}
+	githubBranch := "master"
+	if envBranch := os.Getenv("GITHUB_BRANCH"); envBranch != "" {
+		githubBranch = envBranch
+	}
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return err
 	}
     m, err := migrate.NewWithDatabaseInstance(
-        "github://ngavinsir:5373136ec972e61a901abcb1e0a39e0b442638b7@ngavinsir/api-supply-demand-covid19/tree/staging/migrations",
+        fmt.Sprintf("github://ngavinsir:%s@ngavinsir/api-supply-demand-covid19/migrations#%s", githubAccessToken, githubBranch),
 		"postgres", driver)
 	if err != nil {
 		return err
 	}
 
-    if err := m.Up(); err != nil {
-		return err
-	}
-
+	m.Up()
+	
 	return nil
 }
