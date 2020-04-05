@@ -1,0 +1,1 @@
+alter table password_reset_requests alter column date set not null;

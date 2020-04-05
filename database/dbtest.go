@@ -37,6 +37,7 @@ func ResetTestDB(db *sql.DB) error {
 	models.Units().DeleteAll(context.Background(), tx)
 	models.Requests().DeleteAll(context.Background(), tx)
 	models.Users().DeleteAll(context.Background(), tx)
+	models.PasswordResetRequests().DeleteAll(context.Background(), tx)
 
 	err = tx.Commit()
 	return err
