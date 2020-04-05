@@ -29,8 +29,12 @@ func NewAPI(db *sql.DB) *API {
 	stockDatastore := &model.StockDataStore{DB: db}
 	donationDatastore := &model.DonationDataStore{DB: db}
 	allocationDatastore := &model.AllocationDatastore{DB: db}
+	passwordResetRequestDatastore := &model.PasswordResetRequestDatastore{DB: db}
 
-	authResource := &AuthResource{UserDatastore: userDatastore}
+	authResource := &AuthResource{
+		UserDatastore: userDatastore,
+		PasswordResetRequestDatastore: passwordResetRequestDatastore,
+	}
 	unitResource := &UnitResource{
 		UnitDatastore: unitDatastore,
 		UserDatastore: userDatastore,

@@ -4,25 +4,29 @@
 package models
 
 var TableNames = struct {
-	AllocationItems string
-	Allocations     string
-	DonationItems   string
-	Donations       string
-	Items           string
-	RequestItems    string
-	Requests        string
-	Stocks          string
-	Units           string
-	Users           string
+	AllocationItems       string
+	Allocations           string
+	DonationItems         string
+	Donations             string
+	Items                 string
+	PasswordResetRequests string
+	RequestItems          string
+	Requests              string
+	SchemaMigrations      string
+	Stocks                string
+	Units                 string
+	Users                 string
 }{
-	AllocationItems: "allocation_items",
-	Allocations:     "allocations",
-	DonationItems:   "donation_items",
-	Donations:       "donations",
-	Items:           "items",
-	RequestItems:    "request_items",
-	Requests:        "requests",
-	Stocks:          "stocks",
-	Units:           "units",
-	Users:           "users",
+	AllocationItems:       "allocation_items",
+	Allocations:           "allocations",
+	DonationItems:         "donation_items",
+	Donations:             "donations",
+	Items:                 "items",
+	PasswordResetRequests: "password_reset_requests",
+	RequestItems:          "request_items",
+	Requests:              "requests",
+	SchemaMigrations:      "schema_migrations",
+	Stocks:                "stocks",
+	Units:                 "units",
+	Users:                 "users",
 }

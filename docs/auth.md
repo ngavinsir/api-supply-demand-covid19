@@ -55,7 +55,7 @@
     }
     ```
 
-# Refresh
+# Refresh Token
 
 * Endpoint: `/api/v1/auth/refresh`
 * HTTP Method: `POST`
@@ -69,3 +69,29 @@
     eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9eyJleHAiOjE1ODUyNTgwMzYsInVzZXJfaWQiOiIxWmc0N2RENlVydk8zSkRCY2ZJN0d1Qlo
     2TXoifQ.59-EqcUkQSxzIlND6cCfaI0OVTDd6rcMZnEqttFkLqk
     ```
+
+# Create Password Reset Request
+
+* Endpoint: `/api/v1/auth/reset`
+* HTTP Method: `POST`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body:
+    ```
+    {
+        "newPassword": "test123"
+    }
+* Response Body: `-`
+
+# Confirm Password Reset Request
+
+* Endpoint: `/api/v1/auth/reset/{requestID}/confirm`
+* HTTP Method: `PUT`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body: `-`
+* Response Body: `-`
