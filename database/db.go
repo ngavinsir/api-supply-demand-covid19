@@ -45,9 +45,8 @@ func connect(conn string) (*sql.DB, error) {
 }
 
 func execSchema(db *sql.DB) error {
-	if err := godotenv.Load(); err != nil {
-		return err
-	}
+	godotenv.Load()
+
 	githubAccessToken := os.Getenv("GITHUB_ACCESS_TOKEN")
 	if githubAccessToken == "" {
 		return errors.New("github access token not set")
