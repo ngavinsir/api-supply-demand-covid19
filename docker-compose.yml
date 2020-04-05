@@ -2,8 +2,6 @@ version: '2.1'
 services:
   db:
     image: postgres:12.2
-    volumes:
-      - ./migrations:/docker-entrypoint-initdb.d
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
@@ -16,5 +14,14 @@ services:
      - db
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres?sslmode=disable
+      - JWT_SECRET=sample-jwt-secret
     ports:
       - "4040:4040"
+
+  test-db:
+    image: postgres:12.2
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+    ports:
+      - "7654:5432"

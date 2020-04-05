@@ -1,0 +1,265 @@
+package model
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"time"
+
+	"github.com/ngavinsir/api-supply-demand-covid19/models"
+	"github.com/segmentio/ksuid"
+	"github.com/volatiletech/sqlboiler/boil"
+	. "github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/types"
+)
+
+// HasCreateRequest handles new request creation.
+type HasCreateRequest interface {
+	CreateRequest(ctx context.Context, requestItems []*models.RequestItem, applicantID string) (*RequestData, error)
+}
+
+// HasGetAllRequest handles requests retrieval.
+type HasGetAllRequest interface {
+	GetAllRequest(ctx context.Context, offset int, limit int) ([]*RequestData, int64, error)
+}
+
+// HasUpdateRequest handles update existsing requests
+type HasUpdateRequest interface {
+	UpdateRequest(ctx context.Context, requestItems []*models.RequestItem, applicantID string, requestID string) (*RequestData, error)
+}
+
+// RequestDatastore holds db information.
+type RequestDatastore struct {
+	*sql.DB
+}
+
+// CreateRequest handles new request creation with given request items and applicant id.
+func (db *RequestDatastore) CreateRequest(
+	ctx context.Context,
+	requestItems []*models.RequestItem,
+	applicantID string,
+) (*RequestData, error) {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	request := &models.Request{
+		ID:                  ksuid.New().String(),
+		Date:                time.Now(),
+		DonationApplicantID: applicantID,
+	}
+
+	err = request.Insert(ctx, tx, boil.Infer())
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	var items []*RequestItemData
+	resultChan := make(chan struct {
+		*models.RequestItem
+		error
+	})
+
+	for _, item := range requestItems {
+		go func(item *models.RequestItem) {
+			item.ID = ksuid.New().String()
+			item.RequestID = request.ID
+
+			item.L.LoadItem(ctx, db, true, item, nil)
+			item.L.LoadUnit(ctx, db, true, item, nil)
+
+			if err := item.Insert(ctx, tx, boil.Infer()); err != nil {
+				tx.Rollback()
+				resultChan <- struct {
+					*models.RequestItem
+					error
+				}{nil, err}
+			}
+
+			resultChan <- struct {
+				*models.RequestItem
+				error
+			}{item, nil}
+		}(item)
+	}
+
+	for i := 0; i < len(requestItems); i++ {
+		result := <-resultChan
+		if result.error != nil {
+			tx.Rollback()
+			return nil, result.error
+		}
+		items = append(items, &RequestItemData{
+			ID:       result.RequestItem.ID,
+			Item:     result.RequestItem.R.Item.Name,
+			Unit:     result.RequestItem.R.Unit.Name,
+			Quantity: result.RequestItem.Quantity,
+		})
+	}
+
+	requestData := &RequestData{
+		ID:           request.ID,
+		Date:         request.Date,
+		IsFulfilled:  request.IsFulfilled,
+		RequestItems: items,
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return requestData, nil
+}
+
+// UpdateRequest handles new request creation with given request items and applicant id.
+func (db *RequestDatastore) UpdateRequest(
+	ctx context.Context,
+	requestItems []*models.RequestItem,
+	applicantID string,
+	requestID string,
+) (*RequestData, error) {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	request, err := models.FindRequest(ctx, tx, requestID)
+	if err != nil {
+		return nil, err
+	}
+
+	if request.IsFulfilled {
+		return nil, errors.New("request is already fulfilled")
+	}
+
+	var items []*RequestItemData
+	resultChan := make(chan struct {
+		*models.RequestItem
+		error
+	})
+
+	for _, item := range requestItems {
+		go func(item *models.RequestItem, requestID string) {
+			if _, err := models.RequestItems(
+				models.RequestItemWhere.ID.EQ(item.ID),
+				models.RequestItemWhere.RequestID.EQ(request.ID),
+			).One(ctx, db); err != nil {
+				tx.Rollback()
+				resultChan <- struct {
+					*models.RequestItem
+					error
+				}{nil, err}
+			}
+
+			item.RequestID = requestID
+			item.L.LoadItem(ctx, db, true, item, nil)
+			item.L.LoadUnit(ctx, db, true, item, nil)
+
+			if _, err := item.Update(ctx, tx, boil.Infer()); err != nil {
+				tx.Rollback()
+				resultChan <- struct {
+					*models.RequestItem
+					error
+				}{nil, err}
+			}
+
+			resultChan <- struct {
+				*models.RequestItem
+				error
+			}{item, nil}
+		}(item, requestID)
+	}
+
+	for i := 0; i < len(requestItems); i++ {
+		result := <-resultChan
+		if result.error != nil {
+			tx.Rollback()
+			return nil, result.error
+		}
+		items = append(items, &RequestItemData{
+			ID:        result.RequestItem.ID,
+			RequestID: result.RequestItem.RequestID,
+			Item:      result.RequestItem.R.Item.Name,
+			Unit:      result.RequestItem.R.Unit.Name,
+			Quantity:  result.RequestItem.Quantity,
+		})
+	}
+
+	requestData := &RequestData{
+		ID:           request.ID,
+		Date:         request.Date,
+		IsFulfilled:  request.IsFulfilled,
+		RequestItems: items,
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return requestData, nil
+}
+
+// GetAllRequest gets all requests.
+func (db *RequestDatastore) GetAllRequest(ctx context.Context, offset int, limit int) ([]*RequestData, int64, error) {
+	requests, err := models.Requests(
+		Load("RequestItems.Item"),
+		Load("RequestItems.Unit"),
+		Load(models.RequestRels.DonationApplicant),
+		Offset(offset),
+		Limit(limit),
+	).All(ctx, db)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var requestData []*RequestData
+	for _, r := range requests {
+		r.R.DonationApplicant.Password = ""
+
+		var requestItems []*RequestItemData
+		for _, item := range r.R.RequestItems {
+			requestItems = append(requestItems, &RequestItemData{
+				ID:       item.ID,
+				Item:     item.R.Item.Name,
+				Unit:     item.R.Unit.Name,
+				Quantity: item.Quantity,
+			})
+		}
+
+		requestData = append(requestData, &RequestData{
+			ID:                r.ID,
+			Date:              r.Date,
+			IsFulfilled:       r.IsFulfilled,
+			RequestItems:      requestItems,
+			DonationApplicant: r.R.DonationApplicant,
+		})
+	}
+
+	requestCount, err := models.Requests().Count(ctx, db)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return requestData, requestCount, nil
+}
+
+// RequestData struct
+type RequestData struct {
+	ID                string             `json:"id"`
+	Date              time.Time          `json:"date"`
+	IsFulfilled       bool               `json:"isFulfilled"`
+	DonationApplicant *models.User       `json:"donationApplicant,omitempty"`
+	RequestItems      []*RequestItemData `json:"requestItems"`
+}
+
+type RequestItemData struct {
+	ID        string        `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Item      string        `boil:"item" json:"item" toml:"item" yaml:"item"`
+	Unit      string        `boil:"unit" json:"unit" toml:"unit" yaml:"unit"`
+	Quantity  types.Decimal `boil:"quantity" json:"quantity" toml:"quantity" yaml:"quantity"`
+	RequestID string        `boil:"request_id" json:"request_id,omitempty" toml:"request_id" yaml:"request_id"`
+}

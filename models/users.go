@@ -26,7 +26,7 @@ import (
 type User struct {
 	ID            string      `boil:"id" json:"id" toml:"id" yaml:"id"`
 	Email         string      `boil:"email" json:"email" toml:"email" yaml:"email"`
-	Password      string      `boil:"password" json:"password" toml:"password" yaml:"password"`
+	Password      string      `boil:"password" json:"password,omitempty" toml:"password" yaml:"password"`
 	Name          string      `boil:"name" json:"name" toml:"name" yaml:"name"`
 	ContactPerson null.String `boil:"contact_person" json:"contact_person,omitempty" toml:"contact_person" yaml:"contact_person,omitempty"`
 	ContactNumber null.String `boil:"contact_number" json:"contact_number,omitempty" toml:"contact_number" yaml:"contact_number,omitempty"`
