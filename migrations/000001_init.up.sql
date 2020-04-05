@@ -1,5 +1,3 @@
-alter schema public owner to postgres;
-
 create table if not exists items
 (
 	id text not null
@@ -7,8 +5,6 @@ create table if not exists items
 			primary key,
 	name text not null
 );
-
-alter table items owner to postgres;
 
 create unique index if not exists items_name_uindex
 	on items (name);
@@ -20,8 +16,6 @@ create table if not exists units
 			primary key,
 	name text not null
 );
-
-alter table units owner to postgres;
 
 create unique index if not exists units_name_uindex
 	on units (name);
@@ -42,8 +36,6 @@ create table if not exists stocks
 	quantity numeric(12,2) not null
 );
 
-alter table stocks owner to postgres;
-
 create table if not exists users
 (
 	id text not null
@@ -56,8 +48,6 @@ create table if not exists users
 	contact_number text,
 	role text not null
 );
-
-alter table users owner to postgres;
 
 create unique index if not exists users_email_uindex
 	on users (email);
@@ -75,8 +65,6 @@ create table if not exists donations
 			references users
 				on delete restrict
 );
-
-alter table donations owner to postgres;
 
 create table if not exists donation_items
 (
@@ -98,8 +86,6 @@ create table if not exists donation_items
 	quantity numeric(12,2) not null
 );
 
-alter table donation_items owner to postgres;
-
 create table if not exists requests
 (
 	id text not null
@@ -112,8 +98,6 @@ create table if not exists requests
 			references users
 				on delete restrict
 );
-
-alter table requests owner to postgres;
 
 create table if not exists request_items
 (
@@ -135,8 +119,6 @@ create table if not exists request_items
 				on delete cascade
 );
 
-alter table request_items owner to postgres;
-
 create table if not exists allocations
 (
 	id text not null
@@ -153,8 +135,6 @@ create table if not exists allocations
 			references users
 				on delete restrict
 );
-
-alter table allocations owner to postgres;
 
 create table if not exists allocation_items
 (
@@ -176,4 +156,15 @@ create table if not exists allocation_items
 	quantity numeric(12,2) not null
 );
 
-alter table allocation_items owner to postgres;
+create table if not exists password_reset_requests
+(
+	id text not null
+		constraint password_reset_requests_pk
+			primary key,
+	user_id text not null
+		constraint password_reset_requests_users_id_fk
+			references users
+				on delete cascade,
+	new_password text not null,
+	date timestamp with time zone
+);
