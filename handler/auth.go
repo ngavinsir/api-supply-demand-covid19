@@ -22,6 +22,7 @@ import (
 // AuthResource holds user data store information.
 type AuthResource struct {
 	*model.UserDatastore
+	*model.PasswordResetRequestDatastore
 }
 
 // Common ctx key.
@@ -48,7 +49,14 @@ func (res *AuthResource) router() *chi.Mux {
 
 	r.Post("/login", Login(res.UserDatastore))
 	r.Post("/register", Register(res.UserDatastore))
-	r.With(AuthMiddleware).Post("/refresh", RefreshToken)
+	
+	r.Group(func(r chi.Router) {
+		r.Use(AuthMiddleware)
+
+		r.Post("/refresh", RefreshToken)
+		r.With((UserCtx(res))).Post("/reset", ResetPassword(res))
+		r.With((UserCtx(res))).Put("/reset/{requestID}/confirm", ConfirmPasswordReset(res))
+	})
 
 	return r
 }
@@ -191,6 +199,48 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 	render.PlainText(w, r, tokenString)
 }
 
+// ResetPassword creates new password reset request.
+func ResetPassword(repo interface{ model.HasCreatePasswordResetRequest }) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		data := &ResetPasswordRequest{}
+		if err := render.Bind(r, data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+
+		id, err := repo.CreatePasswordResetRequest(r.Context(), user.ID, data.NewPassword)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+
+		if err = SendPasswordResetConfirmationMail(user.Email, id); err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+	}
+}
+
+// ConfirmPasswordReset confirms password reset request.
+func ConfirmPasswordReset(repo interface{ model.HasConfirmPasswordResetRequest }) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		requestID := chi.URLParam(r, "requestID")
+		if requestID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+
+		if err := repo.ConfirmPasswordResetRequest(r.Context(), user.ID, requestID); err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+	}
+}
+
 // AuthMiddleware to handle request jwt token
 func AuthMiddleware(next http.Handler) http.Handler {
 	return jwtauth.Verifier(jwtAuth)(extractUserID(next))
@@ -265,4 +315,18 @@ func (req *LoginRequest) Bind(r *http.Request) error {
 type LoginResponse struct {
 	User *models.User `json:"user"`
 	JWT  string       `json:"jwt,omitempty"`
+}
+
+// ResetPasswordRequest struct
+type ResetPasswordRequest struct {
+	NewPassword string `json:"newPassword"`
+}
+
+// Bind ResetPasswordRequest (newPassword) [Required]
+func (req *ResetPasswordRequest) Bind(r *http.Request) error {
+	if req.NewPassword == "" {
+		return ErrMissingReqFields
+	}
+
+	return nil
 }
