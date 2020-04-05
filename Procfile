@@ -1,0 +1,1 @@
+web: bin/api-supply-demand-covid19
