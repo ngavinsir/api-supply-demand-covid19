@@ -35,7 +35,10 @@ func NewAPI(db *sql.DB) *API {
 		UnitDatastore: unitDatastore,
 		UserDatastore: userDatastore,
 	}
-	stockResource := &StockResource{StockDataStore: stockDatastore}
+	stockResource := &StockResource{
+		StockDataStore: stockDatastore,
+		UserDatastore: userDatastore,
+	}
 	requestResource := &RequestResource{
 		requestDatastore: requestDatastore,
 		userDatastore:    userDatastore,
