@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	"github.com/ngavinsir/api-supply-demand-covid19/model"
 )
 
@@ -28,13 +29,20 @@ func NewAPI(db *sql.DB) *API {
 	stockDatastore := &model.StockDataStore{DB: db}
 	donationDatastore := &model.DonationDataStore{DB: db}
 	allocationDatastore := &model.AllocationDatastore{DB: db}
+	passwordResetRequestDatastore := &model.PasswordResetRequestDatastore{DB: db}
 
-	authResource := &AuthResource{UserDatastore: userDatastore}
+	authResource := &AuthResource{
+		UserDatastore: userDatastore,
+		PasswordResetRequestDatastore: passwordResetRequestDatastore,
+	}
 	unitResource := &UnitResource{
 		UnitDatastore: unitDatastore,
 		UserDatastore: userDatastore,
 	}
-	stockResource := &StockResource{StockDataStore: stockDatastore}
+	stockResource := &StockResource{
+		StockDataStore: stockDatastore,
+		UserDatastore: userDatastore,
+	}
 	requestResource := &RequestResource{
 		requestDatastore: requestDatastore,
 		userDatastore:    userDatastore,
@@ -71,6 +79,13 @@ func NewAPI(db *sql.DB) *API {
 func (api *API) Router() *chi.Mux {
 	r := chi.NewRouter()
 
+	cors := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+	})
+
+	r.Use(cors.Handler)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)

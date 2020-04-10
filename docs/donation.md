@@ -45,6 +45,50 @@
     }
     ```
 
+# Get All Donation
+
+* Endpoint: `/api/v1/donations?page=1&size=1`
+* HTTP Method: `GET`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+* Request Body: `-`
+* Response Body:
+    ```
+    {
+        "data": [
+            {
+                "id": "1aMeoehZkXbki1xJo47X6FwBtcU",
+                "date": "2020-04-10T20:21:05.053957Z",
+                "isAccepted": false,
+                "isDonated": false,
+                "donator": {
+                    "id": "1a871e37D2acUEUl9ssOZTKsjsy",
+                    "email": "ngavinsir@gmail.com",
+                    "name": "ngavinsir",
+                    "contact_person": null,
+                    "contact_number": null,
+                    "role": "DONATOR"
+                },
+                "donationItems": [
+                    {
+                        "id": "1aMeoatjtEKeCdisz1sbCTnsiQe",
+                        "item": "Masker",
+                        "unit": "Buah",
+                        "quantity": "10.00"
+                    }
+                ]
+            }
+        ],
+        "pages": {
+            "current": 1,
+            "total": 1,
+            "first": true,
+            "last": true
+        }
+    }
+    ```
+
 # Update Donation
 
 * Endpoint: `/api/v1/donations`
@@ -118,21 +162,25 @@
 * Response Body:
     ```
     {
-        "donation": {
-            "id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
-            "date": "2020-03-29T01:04:03.458704516+07:00",
-            "is_accepted": false,
-            "is_donated": false,
-            "donator_id": "1ZiESUvzPPP0r9SCTtkt84eAGfP"
+        "id": "1aMeoehZkXbki1xJo47X6FwBtcU",
+        "date": "2020-04-10T20:21:05.053957Z",
+        "isAccepted": false,
+        "isDonated": false,
+        "donator": {
+            "id": "1a871e37D2acUEUl9ssOZTKsjsy",
+            "email": "ngavinsir@gmail.com",
+            "name": "ngavinsir",
+            "contact_person": null,
+            "contact_number": null,
+            "role": "DONATOR"
         },
-        "items": [
+        "donationItems": [
             {
-                "id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
-                "donation_id": "1ZlfXsUn4fYgvWc7Ke6SZSNuDPn",
-                "item_id": "1",
-                "unit_id": "1",
-                "quantity": "10"
-            },
+                "id": "1aMeoatjtEKeCdisz1sbCTnsiQe",
+                "item": "Masker",
+                "unit": "Buah",
+                "quantity": "10.00"
+            }
         ]
     }
     ```

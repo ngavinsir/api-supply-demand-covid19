@@ -13,14 +13,20 @@ import (
 // StockResource holds stock data store information.
 type StockResource struct {
 	*model.StockDataStore
+	*model.UserDatastore
 }
 
-func (store *StockResource) router() *chi.Mux {
+func (res *StockResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Use(PaginationCtx)
-	r.Get("/", GetAllStock(store))
-	r.Post("/", CreateOrUpdateStock(store))
+	r.With(PaginationCtx).Get("/", GetAllStock(res.StockDataStore))
+
+	r.Group(func(r chi.Router) {
+		r.Use(AuthMiddleware)
+		r.Use(UserCtx(res.UserDatastore))
+
+		r.Post("/", CreateOrUpdateStock(res.StockDataStore))
+	})
 
 	return r
 }
@@ -50,6 +56,12 @@ func GetAllStock(repo interface {
 // CreateOrUpdateStock creates or updates stock.
 func CreateOrUpdateStock(repo interface{ model.HasCreateOrUpdateStock }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
 		data := &StockRequest{}
 		if err := render.Bind(r, data); err != nil {
 			render.Render(w, r, ErrInvalidRequest(err))

@@ -20,6 +20,7 @@ func (res *DonationResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Get("/{donationID}", GetDonation(res.DonationDataStore))
+	r.With(PaginationCtx).Get("/", GetAllDonations(res.DonationDataStore))
 
 	r.Group(func(r chi.Router) {
 		r.Use(AuthMiddleware)
@@ -98,6 +99,32 @@ func GetDonation(donationRepo interface{ model.HasGetDonation }) http.HandlerFun
 	}
 }
 
+// GetAllDonations gets all requests.
+func GetAllDonations(
+	repo interface {
+		model.HasGetAllDonations
+		model.HasGetTotalDonationCount
+	},
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		paging, _ := r.Context().Value(PageCtxKey).(*Paging)
+
+		donationData, err := repo.GetAllDonations(r.Context(), paging.Offset(), paging.Size)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+		totalDonationCount, err := repo.GetTotalDonationCount(r.Context())
+
+		donationDataPage := &DonationDataPage{
+			Data:  donationData,
+			Pages: paging.Pages(totalDonationCount),
+		}
+
+		render.JSON(w, r, donationDataPage)
+	}
+}
+
 // CreateDonationRequest struct
 type CreateDonationRequest struct {
 	DonationItems []*models.DonationItem `json:"donationItems"`
@@ -110,4 +137,10 @@ func (req *CreateDonationRequest) Bind(r *http.Request) error {
 	}
 
 	return nil
+}
+
+// DonationDataPage struct
+type DonationDataPage struct {
+	Data  []*model.DonationData `boil:"data" json:"data"`
+	Pages *Page                `boil:"pages" json:"pages"`
 }

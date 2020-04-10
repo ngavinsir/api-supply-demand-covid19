@@ -53,7 +53,6 @@
 * Request Header:
     * Accept: `application/json`
     * Content-type: `application/json`
-    * Authorization: `Bearer token`
 * Request Body: `-`
 * Response Body:
     ```

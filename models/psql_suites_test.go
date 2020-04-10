@@ -16,9 +16,13 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("Items", testItemsUpsert)
 
+	t.Run("PasswordResetRequests", testPasswordResetRequestsUpsert)
+
 	t.Run("RequestItems", testRequestItemsUpsert)
 
 	t.Run("Requests", testRequestsUpsert)
+
+	t.Run("SchemaMigrations", testSchemaMigrationsUpsert)
 
 	t.Run("Stocks", testStocksUpsert)
 
