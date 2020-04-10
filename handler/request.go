@@ -19,6 +19,15 @@ func (res *RequestResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.With(PaginationCtx).Get("/", GetAllRequest(res.requestDatastore))
+	r.Get("/{requestID}", GetRequest(res.requestDatastore))
+
+	r.Group(func(r chi.Router) {
+		r.Use(AuthMiddleware)
+		r.Use(UserCtx(res.userDatastore))
+		
+		r.Post("/", CreateRequest(res.requestDatastore))
+		r.Put("/{requestID}", UpdateRequest(res.requestDatastore))
+	})
 
 	r.Group(func(r chi.Router) {
 		r.Use(AuthMiddleware)
@@ -106,6 +115,21 @@ func GetAllRequest(
 		}
 
 		render.JSON(w, r, requestDataPage)
+	}
+}
+
+// GetRequest handles get request detail
+func GetRequest(repo interface{ model.HasGetRequest }) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		requestID := chi.URLParam(r, "requestID")
+
+		request, err := repo.GetRequest(r.Context(), requestID)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+
+		render.JSON(w, r, request)
 	}
 }
 
