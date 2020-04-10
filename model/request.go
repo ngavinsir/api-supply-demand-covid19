@@ -30,7 +30,7 @@ type HasGetTotalRequestCount interface {
 
 // HasGetRequest handles requests retrieval.
 type HasGetRequest interface {
-	GetRequest(ctx context.Context, applicant *models.User, requestID string) (*RequestData, error)
+	GetRequest(ctx context.Context, requestID string) (*RequestData, error)
 }
 
 // HasUpdateRequest handles update existsing requests
@@ -265,7 +265,6 @@ func (db *RequestDatastore) GetTotalRequestCount(ctx context.Context) (int64, er
 // GetRequest handles get request detail given request id and applicant id.
 func (db *RequestDatastore) GetRequest(
 	ctx context.Context,
-	applicant *models.User,
 	requestID string,
 ) (*RequestData, error) {
 	request, err := models.Requests(
@@ -275,10 +274,6 @@ func (db *RequestDatastore) GetRequest(
 	).One(ctx, db)
 	if err != nil {
 		return nil, errors.New("request id not found")
-	}
-
-	if applicant.Role != "ADMIN" && request.DonationApplicantID != applicant.ID {
-		return nil, errors.New("unauthorized")
 	}
 
 	var requestItems []*RequestItemData

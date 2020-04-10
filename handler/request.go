@@ -115,13 +115,7 @@ func GetRequest(repo interface{ model.HasGetRequest }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		requestID := chi.URLParam(r, "requestID")
 
-		user, _ := r.Context().Value(UserCtxKey).(*models.User)
-		if user.Role != model.RoleApplicant && user.Role != model.RoleAdmin {
-			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
-			return
-		}
-
-		request, err := repo.GetRequest(r.Context(), user, requestID)
+		request, err := repo.GetRequest(r.Context(), requestID)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
