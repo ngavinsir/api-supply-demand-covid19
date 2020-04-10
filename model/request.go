@@ -20,7 +20,12 @@ type HasCreateRequest interface {
 
 // HasGetAllRequest handles requests retrieval.
 type HasGetAllRequest interface {
-	GetAllRequest(ctx context.Context, offset int, limit int) ([]*RequestData, int64, error)
+	GetAllRequest(ctx context.Context, offset int, limit int) ([]*RequestData, error)
+}
+
+// HasGetTotalRequestCount handles requests count retrieval.
+type HasGetTotalRequestCount interface {
+	GetTotalRequestCount(ctx context.Context) (int64, error)
 }
 
 // HasUpdateRequest handles update existsing requests
@@ -204,7 +209,7 @@ func (db *RequestDatastore) UpdateRequest(
 }
 
 // GetAllRequest gets all requests.
-func (db *RequestDatastore) GetAllRequest(ctx context.Context, offset int, limit int) ([]*RequestData, int64, error) {
+func (db *RequestDatastore) GetAllRequest(ctx context.Context, offset int, limit int) ([]*RequestData, error) {
 	requests, err := models.Requests(
 		Load("RequestItems.Item"),
 		Load("RequestItems.Unit"),
@@ -213,7 +218,7 @@ func (db *RequestDatastore) GetAllRequest(ctx context.Context, offset int, limit
 		Limit(limit),
 	).All(ctx, db)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	var requestData []*RequestData
@@ -239,12 +244,17 @@ func (db *RequestDatastore) GetAllRequest(ctx context.Context, offset int, limit
 		})
 	}
 
-	requestCount, err := models.Requests().Count(ctx, db)
+	return requestData, nil
+}
+
+// GetTotalRequestCount returns total request count.
+func (db *RequestDatastore) GetTotalRequestCount(ctx context.Context) (int64, error) {
+	totalRequestCount, err := models.Requests().Count(ctx, db)
 	if err != nil {
-		return nil, 0, err
+		return 0, err
 	}
 
-	return requestData, requestCount, nil
+	return totalRequestCount, nil
 }
 
 // RequestData struct

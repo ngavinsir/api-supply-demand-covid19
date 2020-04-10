@@ -19,12 +19,16 @@ type DonationResource struct {
 func (res *DonationResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Use(AuthMiddleware)
-	r.Use(UserCtx(res.UserDatastore))
+	r.With(PaginationCtx).Get("/", GetAllDonations(res.DonationDataStore))
 
-	r.Post("/", CreateOrUpdateDonation(res.DonationDataStore, model.CreateAction))
-	r.Put("/", CreateOrUpdateDonation(res.DonationDataStore, model.UpdateAction))
-	r.Put("/{donationID}/accept", AcceptDonation(res.DonationDataStore, res.StockDataStore))
+	r.Group(func(r chi.Router) {
+		r.Use(AuthMiddleware)
+		r.Use(UserCtx(res.UserDatastore))
+
+		r.Post("/", CreateOrUpdateDonation(res.DonationDataStore, model.CreateAction))
+		r.Put("/", CreateOrUpdateDonation(res.DonationDataStore, model.UpdateAction))
+		r.Put("/{donationID}/accept", AcceptDonation(res.DonationDataStore, res.StockDataStore))
+	})
 
 	return r
 }
@@ -75,6 +79,32 @@ func AcceptDonation(
 	}
 }
 
+// GetAllDonations gets all requests.
+func GetAllDonations(
+	repo interface {
+		model.HasGetAllDonations
+		model.HasGetTotalDonationCount
+	},
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		paging, _ := r.Context().Value(PageCtxKey).(*Paging)
+
+		donationData, err := repo.GetAllDonations(r.Context(), paging.Offset(), paging.Size)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+		totalDonationCount, err := repo.GetTotalDonationCount(r.Context())
+
+		donationDataPage := &DonationDataPage{
+			Data:  donationData,
+			Pages: paging.Pages(totalDonationCount),
+		}
+
+		render.JSON(w, r, donationDataPage)
+	}
+}
+
 // CreateDonationRequest struct
 type CreateDonationRequest struct {
 	DonationItems []*models.DonationItem `json:"donationItems"`
@@ -87,4 +117,10 @@ func (req *CreateDonationRequest) Bind(r *http.Request) error {
 	}
 
 	return nil
+}
+
+// DonationDataPage struct
+type DonationDataPage struct {
+	Data  []*model.DonationData `boil:"data" json:"data"`
+	Pages *Page                `boil:"pages" json:"pages"`
 }

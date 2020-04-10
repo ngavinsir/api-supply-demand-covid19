@@ -18,11 +18,15 @@ type RequestResource struct {
 func (res *RequestResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Use(AuthMiddleware)
-	r.Use(UserCtx(res.userDatastore))
-	r.Post("/", CreateRequest(res.requestDatastore))
-	r.Put("/{requestID}", UpdateRequest(res.requestDatastore))
 	r.With(PaginationCtx).Get("/", GetAllRequest(res.requestDatastore))
+
+	r.Group(func(r chi.Router) {
+		r.Use(AuthMiddleware)
+		r.Use(UserCtx(res.userDatastore))
+		
+		r.Post("/", CreateRequest(res.requestDatastore))
+		r.Put("/{requestID}", UpdateRequest(res.requestDatastore))
+	})
 
 	return r
 }
@@ -80,19 +84,25 @@ func UpdateRequest(repo interface{ model.HasUpdateRequest }) http.HandlerFunc {
 }
 
 // GetAllRequest gets all requests.
-func GetAllRequest(repo interface{ model.HasGetAllRequest }) http.HandlerFunc {
+func GetAllRequest(
+	repo interface {
+		model.HasGetAllRequest
+		model.HasGetTotalRequestCount
+	},
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		paging, _ := r.Context().Value(PageCtxKey).(*Paging)
 
-		requestData, totalCount, err := repo.GetAllRequest(r.Context(), paging.Offset(), paging.Size)
+		requestData, err := repo.GetAllRequest(r.Context(), paging.Offset(), paging.Size)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
 		}
+		totalRequestCount, err := repo.GetTotalRequestCount(r.Context())
 
 		requestDataPage := &RequestDataPage{
 			Data:  requestData,
-			Pages: paging.Pages(totalCount),
+			Pages: paging.Pages(totalRequestCount),
 		}
 
 		render.JSON(w, r, requestDataPage)
