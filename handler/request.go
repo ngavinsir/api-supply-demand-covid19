@@ -18,11 +18,15 @@ type RequestResource struct {
 func (res *RequestResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Use(AuthMiddleware)
-	r.Use(UserCtx(res.userDatastore))
-	r.Post("/", CreateRequest(res.requestDatastore))
-	r.Put("/{requestID}", UpdateRequest(res.requestDatastore))
 	r.With(PaginationCtx).Get("/", GetAllRequest(res.requestDatastore))
+
+	r.Group(func(r chi.Router) {
+		r.Use(AuthMiddleware)
+		r.Use(UserCtx(res.userDatastore))
+		
+		r.Post("/", CreateRequest(res.requestDatastore))
+		r.Put("/{requestID}", UpdateRequest(res.requestDatastore))
+	})
 
 	return r
 }
