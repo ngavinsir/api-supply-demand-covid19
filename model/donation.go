@@ -28,6 +28,11 @@ type HasAcceptDonation interface {
 	AcceptDonation(ctx context.Context, donationID string, stockRepo interface{ HasCreateOrUpdateStock }) error
 }
 
+// HasGetDonation handles get donation detail
+type HasGetDonation interface {
+	GetDonation(ctx context.Context, donationID string) (*DonationData, error)
+}
+
 // HasGetAllDonations handles domains retrieval.
 type HasGetAllDonations interface {
 	GetAllDonations(ctx context.Context, offset int, limit int) ([]*DonationData, error)
@@ -187,6 +192,45 @@ func (db *DonationDataStore) AcceptDonation(
 	}
 
 	return nil
+}
+
+// GetDonation handles get donation detail by given id
+func (db *DonationDataStore) GetDonation(
+	ctx context.Context,
+	donationID string,
+) (*DonationData, error) {
+	donation, err := models.Donations(
+		models.DonationWhere.ID.EQ(donationID),
+		Load("DonationItems.Item"),
+		Load("DonationItems.Unit"),
+		Load(models.DonationRels.Donator),
+	).One(ctx, db)
+	if err != nil {
+		return nil, errors.New("donation id not found")
+	}
+
+	donation.R.Donator.Password = ""
+
+	var donationItems []*DonationItemData
+	for _, item := range(donation.R.DonationItems) {
+		donationItems = append(donationItems, &DonationItemData{
+			ID: item.ID,
+			Item: item.R.Item.Name,
+			Unit: item.R.Unit.Name,
+			Quantity: item.Quantity,
+		})
+	} 
+
+	donationData := &DonationData{
+		ID: donation.ID,
+		Date: donation.Date,
+		Donator: donation.R.Donator,
+		IsAccepted: donation.IsAccepted,
+		IsDonated: donation.IsDonated,
+		DonationItems: donationItems,
+	}
+
+	return donationData, nil
 }
 
 // GetAllDonations gets all requests.

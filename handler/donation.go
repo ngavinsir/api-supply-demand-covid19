@@ -19,6 +19,7 @@ type DonationResource struct {
 func (res *DonationResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
+	r.Get("/{donationID}", GetDonation(res.DonationDataStore))
 	r.With(PaginationCtx).Get("/", GetAllDonations(res.DonationDataStore))
 
 	r.Group(func(r chi.Router) {
@@ -76,6 +77,25 @@ func AcceptDonation(
 			render.Render(w, r, ErrRender(err))
 			return
 		}
+	}
+}
+
+// GetDonation handles get donation detail given id.
+func GetDonation(donationRepo interface{ model.HasGetDonation }) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		donationID := chi.URLParam(r, "donationID")
+		if donationID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		response, err := donationRepo.GetDonation(r.Context(), donationID)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+
+		render.JSON(w, r, response)
 	}
 }
 

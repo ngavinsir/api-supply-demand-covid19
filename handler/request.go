@@ -29,14 +29,6 @@ func (res *RequestResource) router() *chi.Mux {
 		r.Put("/{requestID}", UpdateRequest(res.requestDatastore))
 	})
 
-	r.Group(func(r chi.Router) {
-		r.Use(AuthMiddleware)
-		r.Use(UserCtx(res.userDatastore))
-		
-		r.Post("/", CreateRequest(res.requestDatastore))
-		r.Put("/{requestID}", UpdateRequest(res.requestDatastore))
-	})
-
 	return r
 }
 
