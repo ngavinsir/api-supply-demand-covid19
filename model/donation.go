@@ -29,7 +29,7 @@ type HasAcceptDonation interface {
 
 // HasGetDonation handles get donation detail
 type HasGetDonation interface {
-	GetDonation(ctx context.Context, donationID string, donator *models.User) (*DonationData, error)
+	GetDonation(ctx context.Context, donationID string) (*DonationData, error)
 }
 
 // DonationDataStore holds db information.
@@ -175,7 +175,6 @@ func (db *DonationDataStore) AcceptDonation(
 func (db *DonationDataStore) GetDonation(
 	ctx context.Context,
 	donationID string,
-	donator *models.User,
 ) (*DonationData, error) {
 	donation, err := models.Donations(
 		models.DonationWhere.ID.EQ(donationID),
@@ -183,10 +182,6 @@ func (db *DonationDataStore) GetDonation(
 	).One(ctx, db)
 	if err != nil {
 		return nil, errors.New("donation id not found")
-	}
-
-	if donator.Role != "ADMIN" && donator.ID != donation.DonatorID {
-		return nil, errors.New("unauthorized")
 	}
 
 	donationData := &DonationData{

@@ -241,7 +241,7 @@ func testGetDonation(repo *DonationDataStore) func(t *testing.T) {
 		donationID := donations[0].ID
 		donator := donations[0].R.Donator
 
-		donation, err := repo.GetDonation(context.Background(), donationID, donator)
+		donation, err := repo.GetDonation(context.Background(), donationID)
 		if err != nil {
 			t.Error(err)
 		}
@@ -259,25 +259,9 @@ func testGetDonation(repo *DonationDataStore) func(t *testing.T) {
 		}
 
 		// Check not found error
-		_, err = repo.GetDonation(context.Background(), "randomDonationID", donator)
+		_, err = repo.GetDonation(context.Background(), "randomDonationID")
 		if err == nil {
 			t.Errorf("Want error, got success")
-		}
-
-		// Check unauthorized error
-		donator.ID = "randomUserID"
-		donator.Role = "DONATOR"
-		_, err = repo.GetDonation(context.Background(), donationID, donator)
-		if err == nil {
-			t.Errorf("Want error, got success")
-		}
-
-		// Check if admin
-		donator.ID = "randomUserID"
-		donator.Role = "ADMIN"
-		_, err = repo.GetDonation(context.Background(), donationID, donator)
-		if err != nil {
-			t.Errorf("Want success, got error")
 		}
 	}
 }
