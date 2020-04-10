@@ -19,13 +19,16 @@ type DonationResource struct {
 func (res *DonationResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Use(AuthMiddleware)
-	r.Use(UserCtx(res.UserDatastore))
-
-	r.Post("/", CreateOrUpdateDonation(res.DonationDataStore, model.CreateAction))
-	r.Put("/", CreateOrUpdateDonation(res.DonationDataStore, model.UpdateAction))
 	r.Get("/{donationID}", GetDonation(res.DonationDataStore))
-	r.Put("/{donationID}/accept", AcceptDonation(res.DonationDataStore, res.StockDataStore))
+
+	r.Group(func(r chi.Router) {
+		r.Use(AuthMiddleware)
+		r.Use(UserCtx(res.UserDatastore))
+
+		r.Post("/", CreateOrUpdateDonation(res.DonationDataStore, model.CreateAction))
+		r.Put("/", CreateOrUpdateDonation(res.DonationDataStore, model.UpdateAction))
+		r.Put("/{donationID}/accept", AcceptDonation(res.DonationDataStore, res.StockDataStore))
+	})
 
 	return r
 }
@@ -85,13 +88,7 @@ func GetDonation(donationRepo interface{ model.HasGetDonation }) http.HandlerFun
 			return
 		}
 
-		user, _ := r.Context().Value(UserCtxKey).(*models.User)
-		if user.Role != model.RoleDonator && user.Role != model.RoleAdmin {
-			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
-			return
-		}
-
-		response, err := donationRepo.GetDonation(r.Context(), donationID, user)
+		response, err := donationRepo.GetDonation(r.Context(), donationID)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
