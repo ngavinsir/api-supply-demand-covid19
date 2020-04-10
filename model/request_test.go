@@ -267,7 +267,7 @@ func testGetRequest(repo *RequestDatastore, unitID string, itemID string, user *
 		}
 
 		requestID := requestData.ID
-		request, err := repo.GetRequest(context.Background(), user, requestID)
+		request, err := repo.GetRequest(context.Background(), requestID)
 		if err != nil {
 			t.Error(err)
 		}
@@ -284,7 +284,7 @@ func testGetRequest(repo *RequestDatastore, unitID string, itemID string, user *
 			t.Errorf("Want request item id %s, got %s", want, got)
 		}
 
-		_, err = repo.GetRequest(context.Background(), user, "randomUserID")
+		_, err = repo.GetRequest(context.Background(), "randomUserID")
 		if err == nil {
 			t.Errorf("want error, got success")
 		}
