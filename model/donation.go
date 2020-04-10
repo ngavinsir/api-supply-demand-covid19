@@ -10,6 +10,7 @@ import (
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/boil"
 	. "github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/types"
 )
 
 const (
@@ -25,6 +26,21 @@ type HasCreateOrUpdate interface {
 // HasAcceptDonation accepts donation by given id.
 type HasAcceptDonation interface {
 	AcceptDonation(ctx context.Context, donationID string, stockRepo interface{ HasCreateOrUpdateStock }) error
+}
+
+// HasGetDonation handles get donation detail
+type HasGetDonation interface {
+	GetDonation(ctx context.Context, donationID string) (*DonationData, error)
+}
+
+// HasGetAllDonations handles domains retrieval.
+type HasGetAllDonations interface {
+	GetAllDonations(ctx context.Context, offset int, limit int) ([]*DonationData, error)
+}
+
+// HasGetTotalDonationCount handles donations count retrieval.
+type HasGetTotalDonationCount interface {
+	GetTotalDonationCount(ctx context.Context) (int64, error)
 }
 
 // DonationDataStore holds db information.
@@ -53,7 +69,7 @@ func (db *DonationDataStore) CreateOrUpdateDonation(
 		return nil, err
 	}
 
-	var items []*models.DonationItem
+	var items []*DonationItemData
 	resultChan := make(chan struct {
 		*models.DonationItem
 		error
@@ -73,6 +89,9 @@ func (db *DonationDataStore) CreateOrUpdateDonation(
 				item.DonationID = donation.ID
 				_, err = item.Update(ctx, tx, boil.Infer())
 			}
+
+			item.L.LoadItem(ctx, db, true, item, nil)
+			item.L.LoadUnit(ctx, db, true, item, nil)
 
 			if err != nil {
 				tx.Rollback()
@@ -95,12 +114,21 @@ func (db *DonationDataStore) CreateOrUpdateDonation(
 			tx.Rollback()
 			return nil, result.error
 		}
-		items = append(items, result.DonationItem)
+		items = append(items, &DonationItemData{
+			ID:         result.DonationItem.ID,
+			Item:       result.DonationItem.R.Item.Name,
+			Unit:       result.DonationItem.R.Unit.Name,
+			Quantity:   result.DonationItem.Quantity,
+			DonationID: result.DonationItem.DonationID,
+		})
 	}
 
 	donationData := &DonationData{
-		Donation: donation,
-		Items:    items,
+		ID:            donation.ID,
+		Date:          donation.Date,
+		IsAccepted:    donation.IsAccepted,
+		IsDonated:     donation.IsDonated,
+		DonationItems: items,
 	}
 
 	err = tx.Commit()
@@ -166,8 +194,110 @@ func (db *DonationDataStore) AcceptDonation(
 	return nil
 }
 
+// GetDonation handles get donation detail by given id
+func (db *DonationDataStore) GetDonation(
+	ctx context.Context,
+	donationID string,
+) (*DonationData, error) {
+	donation, err := models.Donations(
+		models.DonationWhere.ID.EQ(donationID),
+		Load("DonationItems.Item"),
+		Load("DonationItems.Unit"),
+		Load(models.DonationRels.Donator),
+	).One(ctx, db)
+	if err != nil {
+		return nil, errors.New("donation id not found")
+	}
+
+	donation.R.Donator.Password = ""
+
+	var donationItems []*DonationItemData
+	for _, item := range(donation.R.DonationItems) {
+		donationItems = append(donationItems, &DonationItemData{
+			ID: item.ID,
+			Item: item.R.Item.Name,
+			Unit: item.R.Unit.Name,
+			Quantity: item.Quantity,
+		})
+	} 
+
+	donationData := &DonationData{
+		ID: donation.ID,
+		Date: donation.Date,
+		Donator: donation.R.Donator,
+		IsAccepted: donation.IsAccepted,
+		IsDonated: donation.IsDonated,
+		DonationItems: donationItems,
+	}
+
+	return donationData, nil
+}
+
+// GetAllDonations gets all requests.
+func (db *DonationDataStore) GetAllDonations(ctx context.Context, offset int, limit int) ([]*DonationData, error) {
+	donations, err := models.Donations(
+		Load("DonationItems.Item"),
+		Load("DonationItems.Unit"),
+		Load(models.DonationRels.Donator),
+		Offset(offset),
+		Limit(limit),
+	).All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+
+	var donationData []*DonationData
+	for _, d := range donations {
+		d.R.Donator.Password = ""
+
+		var donationItems []*DonationItemData
+		for _, item := range d.R.DonationItems {
+			donationItems = append(donationItems, &DonationItemData{
+				ID:       item.ID,
+				Item:     item.R.Item.Name,
+				Unit:     item.R.Unit.Name,
+				Quantity: item.Quantity,
+			})
+		}
+
+		donationData = append(donationData, &DonationData{
+			ID:            d.ID,
+			Date:          d.Date,
+			IsAccepted:    d.IsAccepted,
+			IsDonated:     d.IsDonated,
+			DonationItems: donationItems,
+			Donator:       d.R.Donator,
+		})
+	}
+
+	return donationData, nil
+}
+
+// GetTotalDonationCount returns total donation count.
+func (db *DonationDataStore) GetTotalDonationCount(ctx context.Context) (int64, error) {
+	totalDonationCount, err := models.Donations().Count(ctx, db)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalDonationCount, nil
+}
+
 // DonationData struct
 type DonationData struct {
-	Donation *models.Donation       `boil:"donation" json:"donation"`
-	Items    []*models.DonationItem `boil:"items" json:"items"`
+	ID            string              `json:"id"`
+	Date          time.Time           `json:"date"`
+	IsAccepted    bool                `json:"isAccepted"`
+	IsDonated     bool                `json:"isDonated"`
+	Donator       *models.User        `json:"donator,omitempty"`
+	DonationItems []*DonationItemData `json:"donationItems"`
+}
+
+// DonationItemData struct
+type DonationItemData struct {
+	ID         string        `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Item       string        `boil:"item" json:"item" toml:"item" yaml:"item"`
+	Unit       string        `boil:"unit" json:"unit" toml:"unit" yaml:"unit"`
+	Quantity   types.Decimal `boil:"quantity" json:"quantity" toml:"quantity" yaml:"quantity"`
+	DonationID string        `boil:"donation_id" json:"donation_id,omitempty" toml:"donation_id" yaml:"donation_id"`
 }
