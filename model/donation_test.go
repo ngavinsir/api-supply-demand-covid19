@@ -71,7 +71,7 @@ func testCreateDonation(repo *DonationDataStore, stockRepo *StockDataStore) func
 		user.Insert(context.Background(), repo, boil.Infer())
 
 		var wg sync.WaitGroup
-		var d *models.Donation
+		var d string
 		var mu sync.Mutex
 		for i := 0; i < testDonationCount; i++ {
 			wg.Add(1)
@@ -95,27 +95,23 @@ func testCreateDonation(repo *DonationDataStore, stockRepo *StockDataStore) func
 					t.Error(err)
 				}
 
-				if donation.Donation.ID == "" {
-					t.Errorf("Want donation id assigned, got %s", donation.Donation.ID)
+				if donation.ID == "" {
+					t.Errorf("Want donation id assigned, got %s", donation.ID)
 				}
 
-				if got, want := len(donation.Items), testDonationItemsLen; got != want {
+				if got, want := len(donation.DonationItems), testDonationItemsLen; got != want {
 					t.Errorf("Want donation items length %d, got %d", want, got)
 				}
 
-				if got, want := donation.Donation.DonatorID, testDonationUserID; got != want {
-					t.Errorf("Want donation donator id %s, got %s", want, got)
-				}
-
 				for i := 0; i < testDonationItemsLen; i++ {
-					if got, want := donation.Items[i].DonationID, donation.Donation.ID; got != want {
+					if got, want := donation.DonationItems[i].DonationID, donation.ID; got != want {
 						t.Errorf("Want donation item donation id %s, got %s", want, got)
 					}
 				}
 
 				mu.Lock()
-				if d == nil {
-					d = donation.Donation
+				if d == "" {
+					d = donation.ID
 				}
 				mu.Unlock()
 			}()
@@ -169,26 +165,22 @@ func testUpdateDonation(repo *DonationDataStore) func(t *testing.T) {
 					t.Error(err)
 				}
 
-				if donation.Donation.ID == "" {
-					t.Errorf("Want donation id assigned, got %s", donation.Donation.ID)
+				if donation.ID == "" {
+					t.Errorf("Want donation id assigned, got %s", donation.ID)
 				}
 
-				if got, want := len(donation.Items), len(donationItem); got != want {
+				if got, want := len(donation.DonationItems), len(donationItem); got != want {
 					t.Errorf("Want donation items length %d, got %d", want, got)
 				}
 
-				if got, want := donation.Donation.DonatorID, testDonationUserID; got != want {
-					t.Errorf("Want donation donator id %s, got %s", want, got)
-				}
-
 				for i := 0; i < testDonationItemsLen; i++ {
-					if got, want := donation.Items[i].DonationID, donation.Donation.ID; got != want {
+					if got, want := donation.DonationItems[i].DonationID, donation.ID; got != want {
 						t.Errorf("Want donation item donation id %s, got %s", want, got)
 					}
 				}
 
 				for i := 0; i < testDonationItemsLen; i++ {
-					if got, want := donation.Items[i].ItemID, testDonationItemItemID2; got != want {
+					if got, want := donation.DonationItems[i].Item, "name2"; got != want {
 						t.Errorf("Want donation item item id %s, got %s", want, got)
 					}
 				}
@@ -198,14 +190,14 @@ func testUpdateDonation(repo *DonationDataStore) func(t *testing.T) {
 	}
 }
 
-func testAcceptDonation(repo *DonationDataStore, stockRepo *StockDataStore, donation *models.Donation) func(t *testing.T) {
+func testAcceptDonation(repo *DonationDataStore, stockRepo *StockDataStore, donationID string) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := repo.AcceptDonation(context.Background(), donation.ID, stockRepo)
+		err := repo.AcceptDonation(context.Background(), donationID, stockRepo)
 		if err != nil {
 			t.Error(err)
 		}
 
-		err = donation.Reload(context.Background(), repo.DB)
+		donation, err := models.FindDonation(context.Background(), repo.DB, donationID) 
 		if err != nil {
 			t.Error(err)
 		}
