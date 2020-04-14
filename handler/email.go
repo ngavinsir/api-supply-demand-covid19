@@ -26,7 +26,7 @@ func SendPasswordResetConfirmationMail(userEmail string, requestID string) error
 	return err
 }
 
-// SendEmail sends emailgi ven body and receiver.
+// SendEmail sends email given body and receiver.
 func SendEmail(subject string, body string, receiver string) error {
 	godotenv.Load()
 
