@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ericlagergren/decimal"
 	"github.com/go-chi/chi"
@@ -55,6 +56,7 @@ func CreateAllocation(
 				AdminID:   user.ID,
 				PhotoURL:  null.StringFrom(data.PhotoURL),
 				RequestID: data.RequestID,
+				Date: data.Date,
 			},
 			data.AllocationItems,
 			stockRepo,
@@ -71,6 +73,7 @@ func CreateAllocation(
 // CreateAllocationRequest struct
 type CreateAllocationRequest struct {
 	RequestID       string                     `json:"requestID"`
+	Date			time.Time				   `json:"date"`
 	PhotoURL        string                     `json:"photoURL"`
 	AllocationItems models.AllocationItemSlice `json:"items"`
 }

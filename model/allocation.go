@@ -47,7 +47,9 @@ func (db *AllocationDatastore) CreateAllocation(
 	}
 
 	allocation.ID = ksuid.New().String()
-	allocation.Date = time.Now()
+	if allocation.Date.IsZero() {
+		allocation.Date = time.Now()
+	}
 
 	if err := allocation.Insert(ctx, tx, boil.Infer()); err != nil {
 		tx.Rollback()
