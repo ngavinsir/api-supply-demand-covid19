@@ -23,39 +23,34 @@ import (
 
 // PasswordResetRequest is an object representing the database table.
 type PasswordResetRequest struct {
-	ID          string    `boil:"id" json:"id" toml:"id" yaml:"id"`
-	UserID      string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
-	NewPassword string    `boil:"new_password" json:"new_password" toml:"new_password" yaml:"new_password"`
-	Date        time.Time `boil:"date" json:"date" toml:"date" yaml:"date"`
+	ID     string    `boil:"id" json:"id" toml:"id" yaml:"id"`
+	UserID string    `boil:"user_id" json:"user_id" toml:"user_id" yaml:"user_id"`
+	Date   time.Time `boil:"date" json:"date" toml:"date" yaml:"date"`
 
 	R *passwordResetRequestR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L passwordResetRequestL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var PasswordResetRequestColumns = struct {
-	ID          string
-	UserID      string
-	NewPassword string
-	Date        string
+	ID     string
+	UserID string
+	Date   string
 }{
-	ID:          "id",
-	UserID:      "user_id",
-	NewPassword: "new_password",
-	Date:        "date",
+	ID:     "id",
+	UserID: "user_id",
+	Date:   "date",
 }
 
 // Generated where
 
 var PasswordResetRequestWhere = struct {
-	ID          whereHelperstring
-	UserID      whereHelperstring
-	NewPassword whereHelperstring
-	Date        whereHelpertime_Time
+	ID     whereHelperstring
+	UserID whereHelperstring
+	Date   whereHelpertime_Time
 }{
-	ID:          whereHelperstring{field: "\"password_reset_requests\".\"id\""},
-	UserID:      whereHelperstring{field: "\"password_reset_requests\".\"user_id\""},
-	NewPassword: whereHelperstring{field: "\"password_reset_requests\".\"new_password\""},
-	Date:        whereHelpertime_Time{field: "\"password_reset_requests\".\"date\""},
+	ID:     whereHelperstring{field: "\"password_reset_requests\".\"id\""},
+	UserID: whereHelperstring{field: "\"password_reset_requests\".\"user_id\""},
+	Date:   whereHelpertime_Time{field: "\"password_reset_requests\".\"date\""},
 }
 
 // PasswordResetRequestRels is where relationship names are stored.
@@ -79,8 +74,8 @@ func (*passwordResetRequestR) NewStruct() *passwordResetRequestR {
 type passwordResetRequestL struct{}
 
 var (
-	passwordResetRequestAllColumns            = []string{"id", "user_id", "new_password", "date"}
-	passwordResetRequestColumnsWithoutDefault = []string{"id", "user_id", "new_password", "date"}
+	passwordResetRequestAllColumns            = []string{"id", "user_id", "date"}
+	passwordResetRequestColumnsWithoutDefault = []string{"id", "user_id", "date"}
 	passwordResetRequestColumnsWithDefault    = []string{}
 	passwordResetRequestPrimaryKeyColumns     = []string{"id"}
 )
