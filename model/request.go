@@ -23,9 +23,19 @@ type HasGetAllRequest interface {
 	GetAllRequest(ctx context.Context, offset int, limit int) ([]*RequestData, error)
 }
 
+// HasGetUserRequests handles get user requests
+type HasGetUserRequests interface {
+	GetUserRequests(ctx context.Context, userID string, offset int, limit int) ([]*RequestData, error)
+}
+
 // HasGetTotalRequestCount handles requests count retrieval.
 type HasGetTotalRequestCount interface {
 	GetTotalRequestCount(ctx context.Context) (int64, error)
+}
+
+// HasGetTotalUserRequestCount handles requests count retrieval.
+type HasGetTotalUserRequestCount interface {
+	GetTotalUserRequestCount(ctx context.Context, userID string) (int64, error)
 }
 
 // HasGetRequest handles requests retrieval.
@@ -252,9 +262,61 @@ func (db *RequestDatastore) GetAllRequest(ctx context.Context, offset int, limit
 	return requestData, nil
 }
 
+// GetUserRequests gets all user requests.
+func (db *RequestDatastore) GetUserRequests(ctx context.Context, userID string, offset int, limit int) ([]*RequestData, error) {
+	requests, err := models.Requests(
+		models.RequestWhere.DonationApplicantID.EQ(userID),
+		Load("RequestItems.Item"),
+		Load("RequestItems.Unit"),
+		Load(models.RequestRels.DonationApplicant),
+		Offset(offset),
+		Limit(limit),
+	).All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+
+	var requestData []*RequestData
+	for _, r := range requests {
+		r.R.DonationApplicant.Password = ""
+
+		var requestItems []*RequestItemData
+		for _, item := range r.R.RequestItems {
+			requestItems = append(requestItems, &RequestItemData{
+				ID:       item.ID,
+				Item:     item.R.Item.Name,
+				Unit:     item.R.Unit.Name,
+				Quantity: item.Quantity,
+			})
+		}
+
+		requestData = append(requestData, &RequestData{
+			ID:                r.ID,
+			Date:              r.Date,
+			IsFulfilled:       r.IsFulfilled,
+			RequestItems:      requestItems,
+			DonationApplicant: r.R.DonationApplicant,
+		})
+	}
+
+	return requestData, nil
+}
+
 // GetTotalRequestCount returns total request count.
 func (db *RequestDatastore) GetTotalRequestCount(ctx context.Context) (int64, error) {
 	totalRequestCount, err := models.Requests().Count(ctx, db)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalRequestCount, nil
+}
+
+// GetTotalUserRequestCount returns total user request count.
+func (db *RequestDatastore) GetTotalUserRequestCount(ctx context.Context, userID string) (int64, error) {
+	totalRequestCount, err := models.Requests(
+		models.RequestWhere.DonationApplicantID.EQ(userID),
+	).Count(ctx, db)
 	if err != nil {
 		return 0, err
 	}

@@ -94,6 +94,7 @@ func TestRequest(t *testing.T) {
 	t.Run("Update", testUpdateRequest(&RequestDatastore{DB: db}, unit2.ID, item2.ID, user.ID))
 	t.Run("UpdateWhenFulfilled", testUpdateRequestWhenFulfilled(&RequestDatastore{DB: db}, unit.ID, item.ID, user.ID))
 	t.Run("Get", testGetRequest(&RequestDatastore{DB: db}, unit.ID, item.ID, user))
+	t.Run("Get user", testGetUserRequests(&RequestDatastore{DB: db}, user.ID))
 }
 
 func testCreateRequest(repo *RequestDatastore, unitID string, itemID string, userID string) func(t *testing.T) {
@@ -287,6 +288,21 @@ func testGetRequest(repo *RequestDatastore, unitID string, itemID string, user *
 		_, err = repo.GetRequest(context.Background(), "randomUserID")
 		if err == nil {
 			t.Errorf("want error, got success")
+		}
+	}
+}
+
+func testGetUserRequests(repo *RequestDatastore, userID string) func(t *testing.T) {
+	return func(t *testing.T) {
+		requests, err := repo.GetUserRequests(context.Background(), userID, 0, testRequestCount)
+		if err != nil {
+			t.Error(err)
+		}
+		
+		for _, request := range(requests) {
+			if got, want := request.DonationApplicant.ID, userID; got != want {
+				t.Errorf("Want request donation applicant id %s, got %s", want, got)
+			}
 		}
 	}
 }
