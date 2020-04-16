@@ -41,7 +41,9 @@
         "email": "test",
         "password": "test",
         "name": "test",
-        "role": "donator"
+        "role": "DONATOR",
+        "contact_person": "Donator",
+        "contact_number": "0846272634"
     }
     ```
 * Response Body:
@@ -49,7 +51,9 @@
     {
         "email": "test",
         "name": "test",
-        "role": "donator",
+        "role": "DONATOR",
+        "contact_person": "Donator",
+        "contact_number": "0846272634",
         "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9eyJleHAiOjE1ODUyNTgwMzYsInVzZXJfaWQiOiIxWmc0N2RENlVydk8zSkRCY2ZJN0d1Qlo
         2TXoifQ.59-EqcUkQSxzIlND6cCfaI0OVTDd6rcMZnEqttFkLqk"
     }
