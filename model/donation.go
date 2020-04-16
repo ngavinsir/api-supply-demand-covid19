@@ -33,6 +33,11 @@ type HasGetDonation interface {
 	GetDonation(ctx context.Context, donationID string) (*DonationData, error)
 }
 
+// HasGetUserDonations handles get user donations
+type HasGetUserDonations interface {
+	GetUserDonations(ctx context.Context, userID string, offset int, limit int) ([]*DonationData, error)
+}
+
 // HasGetAllDonations handles domains retrieval.
 type HasGetAllDonations interface {
 	GetAllDonations(ctx context.Context, offset int, limit int) ([]*DonationData, error)
@@ -41,6 +46,11 @@ type HasGetAllDonations interface {
 // HasGetTotalDonationCount handles donations count retrieval.
 type HasGetTotalDonationCount interface {
 	GetTotalDonationCount(ctx context.Context) (int64, error)
+}
+
+// HasGetTotalUserDonationCount handles user donations count retrieval.
+type HasGetTotalUserDonationCount interface {
+	GetTotalUserDonationCount(ctx context.Context, userID string) (int64, error)
 }
 
 // DonationDataStore holds db information.
@@ -233,7 +243,48 @@ func (db *DonationDataStore) GetDonation(
 	return donationData, nil
 }
 
-// GetAllDonations gets all requests.
+// GetUserDonations gets all user donations.
+func (db *DonationDataStore) GetUserDonations(ctx context.Context, userID string, offset int, limit int) ([]*DonationData, error) {
+	donations, err := models.Donations(
+		models.DonationWhere.DonatorID.EQ(userID),
+		Load("DonationItems.Item"),
+		Load("DonationItems.Unit"),
+		Load(models.DonationRels.Donator),
+		Offset(offset),
+		Limit(limit),
+	).All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+
+	var donationData []*DonationData
+	for _, d := range donations {
+		d.R.Donator.Password = ""
+
+		var donationItems []*DonationItemData
+		for _, item := range d.R.DonationItems {
+			donationItems = append(donationItems, &DonationItemData{
+				ID:       item.ID,
+				Item:     item.R.Item.Name,
+				Unit:     item.R.Unit.Name,
+				Quantity: item.Quantity,
+			})
+		}
+
+		donationData = append(donationData, &DonationData{
+			ID:            d.ID,
+			Date:          d.Date,
+			IsAccepted:    d.IsAccepted,
+			IsDonated:     d.IsDonated,
+			DonationItems: donationItems,
+			Donator:       d.R.Donator,
+		})
+	}
+
+	return donationData, nil
+}
+
+// GetAllDonations gets all donations.
 func (db *DonationDataStore) GetAllDonations(ctx context.Context, offset int, limit int) ([]*DonationData, error) {
 	donations, err := models.Donations(
 		Load("DonationItems.Item"),
@@ -276,6 +327,18 @@ func (db *DonationDataStore) GetAllDonations(ctx context.Context, offset int, li
 // GetTotalDonationCount returns total donation count.
 func (db *DonationDataStore) GetTotalDonationCount(ctx context.Context) (int64, error) {
 	totalDonationCount, err := models.Donations().Count(ctx, db)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalDonationCount, nil
+}
+
+// GetTotalUserDonationCount returns total user donation count.
+func (db *DonationDataStore) GetTotalUserDonationCount(ctx context.Context, userID string) (int64, error) {
+	totalDonationCount, err := models.Donations(
+		models.DonationWhere.DonatorID.EQ(userID),
+	).Count(ctx, db)
 	if err != nil {
 		return 0, err
 	}

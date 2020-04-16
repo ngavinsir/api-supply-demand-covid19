@@ -21,6 +21,7 @@ func (res *DonationResource) router() *chi.Mux {
 
 	r.Get("/{donationID}", GetDonation(res.DonationDataStore))
 	r.With(PaginationCtx).Get("/", GetAllDonations(res.DonationDataStore))
+	r.With(PaginationCtx).Get("/user/{userID}", GetUserDonations(res.DonationDataStore))
 
 	r.Group(func(r chi.Router) {
 		r.Use(AuthMiddleware)
@@ -115,6 +116,38 @@ func GetAllDonations(
 			return
 		}
 		totalDonationCount, err := repo.GetTotalDonationCount(r.Context())
+
+		donationDataPage := &DonationDataPage{
+			Data:  donationData,
+			Pages: paging.Pages(totalDonationCount),
+		}
+
+		render.JSON(w, r, donationDataPage)
+	}
+}
+
+// GetUserDonations gets all user donations.
+func GetUserDonations(
+	repo interface {
+		model.HasGetUserDonations
+		model.HasGetTotalUserDonationCount
+	},
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		paging, _ := r.Context().Value(PageCtxKey).(*Paging)
+
+		userID := chi.URLParam(r, "userID")
+		if userID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		donationData, err := repo.GetUserDonations(r.Context(), userID, paging.Offset(), paging.Size)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+		totalDonationCount, err := repo.GetTotalUserDonationCount(r.Context(), userID)
 
 		donationDataPage := &DonationDataPage{
 			Data:  donationData,

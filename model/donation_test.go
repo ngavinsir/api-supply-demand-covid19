@@ -36,10 +36,13 @@ func TestDonation(t *testing.T) {
 		database.ResetTestDB(db)
 		db.Close()
 	}()
+	
+	donationDatastore := &DonationDataStore{DB: db}
 
-	t.Run("Create", testCreateDonation(&DonationDataStore{DB: db}, &StockDataStore{DB: db}))
-	t.Run("Update", testUpdateDonation(&DonationDataStore{DB: db}))
-	t.Run("Get", testGetDonation(&DonationDataStore{DB: db}))
+	t.Run("Create", testCreateDonation(donationDatastore, &StockDataStore{DB: db}))
+	t.Run("Update", testUpdateDonation(donationDatastore))
+	t.Run("Get", testGetDonation(donationDatastore))
+	t.Run("Get user", testGetUserDonation(donationDatastore))
 }
 
 func testCreateDonation(repo *DonationDataStore, stockRepo *StockDataStore) func(t *testing.T) {
@@ -249,6 +252,21 @@ func testGetDonation(repo *DonationDataStore) func(t *testing.T) {
 		_, err = repo.GetDonation(context.Background(), "randomDonationID")
 		if err == nil {
 			t.Errorf("Want error, got success")
+		}
+	}
+}
+
+func testGetUserDonation(repo *DonationDataStore) func(t *testing.T) {
+	return func(t *testing.T) {
+		donations, err := repo.GetUserDonations(context.Background(), testDonationUserID, 0, testDonationCount)
+		if err != nil {
+			t.Error(err)
+		}
+
+		for _, donation := range(donations) {
+			if got, want := donation.Donator.ID, testDonationUserID; got != want {
+				t.Errorf("Want donator id %s, got %s", want, got)
+			}
 		}
 	}
 }
