@@ -1,0 +1,1 @@
+alter table password_reset_requests drop column new_password;

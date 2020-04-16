@@ -47,16 +47,12 @@ func init() {
 func (res *AuthResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Post("/login", Login(res.UserDatastore))
-	r.Post("/register", Register(res.UserDatastore))
+	r.Post("/login", Login(res))
+	r.Post("/register", Register(res))
+	r.Post("/reset", ResetPassword(res))
+	r.Put("/reset/{requestID}/confirm", ConfirmPasswordReset(res))
 	
-	r.Group(func(r chi.Router) {
-		r.Use(AuthMiddleware)
-
-		r.Post("/refresh", RefreshToken)
-		r.With((UserCtx(res))).Post("/reset", ResetPassword(res))
-		r.With((UserCtx(res))).Put("/reset/{requestID}/confirm", ConfirmPasswordReset(res))
-	})
+	r.With(AuthMiddleware).Post("/refresh", RefreshToken)
 
 	return r
 }
@@ -208,15 +204,13 @@ func ResetPassword(repo interface{ model.HasCreatePasswordResetRequest }) http.H
 			return
 		}
 
-		user, _ := r.Context().Value(UserCtxKey).(*models.User)
-
-		id, err := repo.CreatePasswordResetRequest(r.Context(), user.ID, data.NewPassword)
+		id, err := repo.CreatePasswordResetRequest(r.Context(), data.Email)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
 		}
 
-		if err = SendPasswordResetConfirmationMail(user.Email, id); err != nil {
+		if err = SendPasswordResetConfirmationMail(data.Email, id); err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
 		}
@@ -232,9 +226,13 @@ func ConfirmPasswordReset(repo interface{ model.HasConfirmPasswordResetRequest }
 			return
 		}
 
-		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		data := &ConfirmResetPasswordRequest{}
+		if err := render.Bind(r, data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
 
-		if err := repo.ConfirmPasswordResetRequest(r.Context(), user.ID, requestID); err != nil {
+		if err := repo.ConfirmPasswordResetRequest(r.Context(), requestID, data.NewPassword); err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
 		}
@@ -319,11 +317,25 @@ type LoginResponse struct {
 
 // ResetPasswordRequest struct
 type ResetPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+// Bind ResetPasswordRequest (email) [Required]
+func (req *ResetPasswordRequest) Bind(r *http.Request) error {
+	if req.Email == "" {
+		return ErrMissingReqFields
+	}
+
+	return nil
+}
+
+// ConfirmResetPasswordRequest struct
+type ConfirmResetPasswordRequest struct {
 	NewPassword string `json:"newPassword"`
 }
 
-// Bind ResetPasswordRequest (newPassword) [Required]
-func (req *ResetPasswordRequest) Bind(r *http.Request) error {
+// Bind ConfirmResetPasswordRequest (newPassword) [Required]
+func (req *ConfirmResetPasswordRequest) Bind(r *http.Request) error {
 	if req.NewPassword == "" {
 		return ErrMissingReqFields
 	}
