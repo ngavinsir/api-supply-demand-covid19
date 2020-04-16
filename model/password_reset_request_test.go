@@ -35,7 +35,7 @@ func TestPasswordResetRequest(t *testing.T) {
 
 func testCreatePasswordResetRequest(repo *PasswordResetRequestDatastore, user *models.User) func(t *testing.T) {
 	return func(t *testing.T) {
-		id, err := repo.CreatePasswordResetRequest(context.Background(), user.ID, "NEW_PASSWORD")
+		id, err := repo.CreatePasswordResetRequest(context.Background(), user.Email)
 		if err != nil {
 			t.Error(err)
 		}
@@ -49,17 +49,13 @@ func testCreatePasswordResetRequest(repo *PasswordResetRequestDatastore, user *m
 			t.Error("password reset request hasn't been created")
 		}
 
-		if request[0].NewPassword == "NEW_PASSWORD" {
-			t.Error("Want password reset request new password hashed, got not hashed")
-		}
-
 		t.Run("Confirm", testConfirmPasswordReset(repo, id, user))
 	}
 }
 
 func testConfirmPasswordReset(repo *PasswordResetRequestDatastore, requestID string, user *models.User) func(t *testing.T) {
 	return func(t *testing.T) {
-		err := repo.ConfirmPasswordResetRequest(context.Background(), user.ID, requestID)
+		err := repo.ConfirmPasswordResetRequest(context.Background(), requestID, "NEW_PASSWORD")
 		if err != nil {
 			t.Error(err)
 		}
