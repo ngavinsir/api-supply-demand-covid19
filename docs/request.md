@@ -183,3 +183,46 @@
         }
     }
     ```
+
+# Get User Requests
+
+* Endpoint: `/api/v1/requests/user/{userID}`
+* HTTP Method: `GET`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+* Request Body: `-`
+* Response Body:
+    ```
+    {
+        "data": [
+            {
+                "id": "1aMhktyXsy1gTLZOAtc2ObhOwnI",
+                "date": "2020-04-10T20:45:16.952605Z",
+                "isFulfilled": false,
+                "donationApplicant": {
+                    "id": "1a7vQqjAeg3rCBryTNfaWpZnczh",
+                    "email": "admin@admin.com",
+                    "name": "admin@admin.com",
+                    "contact_person": null,
+                    "contact_number": null,
+                    "role": "ADMIN"
+                },
+                "requestItems": [
+                    {
+                        "id": "1aMhkuANqCoTPHj7EkA5NFrkkna",
+                        "item": "Masker",
+                        "unit": "Buah",
+                        "quantity": "2.50"
+                    }
+                ]
+            }
+        ],
+        "pages": {
+            "current": 1,
+            "total": 1,
+            "first": true,
+            "last": true
+        }
+    }
+    ```
