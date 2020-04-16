@@ -81,11 +81,10 @@
 * Request Header:
     * Accept: `application/json`
     * Content-type: `application/json`
-    * Authorization: `Bearer token`
 * Request Body:
     ```
     {
-        "newPassword": "test123"
+        "email": "example@email.com"
     }
 * Response Body: `-`
 
@@ -96,6 +95,10 @@
 * Request Header:
     * Accept: `application/json`
     * Content-type: `application/json`
-    * Authorization: `Bearer token`
-* Request Body: `-`
+* Request Body:
+    ```
+    {
+        "newPassword": "NEW_PASSWORD"
+    }
+    ```
 * Response Body: `-`

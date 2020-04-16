@@ -17,7 +17,7 @@ func SendPasswordResetConfirmationMail(userEmail string, requestID string) error
 
 	err := SendEmail(
 		"Password reset confirmation",
-		"Hi\n\n" +
+		"Hi,\n\n" +
 		"Click the link below to confirm your password reset request.\n" +
 		frontendURL + requestID,
 		userEmail,

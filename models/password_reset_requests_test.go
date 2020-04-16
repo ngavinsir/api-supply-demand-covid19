@@ -677,7 +677,7 @@ func testPasswordResetRequestsSelect(t *testing.T) {
 }
 
 var (
-	passwordResetRequestDBTypes = map[string]string{`ID`: `text`, `UserID`: `text`, `NewPassword`: `text`, `Date`: `timestamp with time zone`}
+	passwordResetRequestDBTypes = map[string]string{`ID`: `text`, `UserID`: `text`, `Date`: `timestamp with time zone`}
 	_                           = bytes.MinRead
 )
 
