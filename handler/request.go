@@ -19,6 +19,7 @@ func (res *RequestResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.With(PaginationCtx).Get("/", GetAllRequest(res.requestDatastore))
+	r.With(PaginationCtx).Get("/user/{userID}", GetUserRequests(res.requestDatastore))
 	r.Get("/{requestID}", GetRequest(res.requestDatastore))
 
 	r.Group(func(r chi.Router) {
@@ -100,6 +101,38 @@ func GetAllRequest(
 			return
 		}
 		totalRequestCount, err := repo.GetTotalRequestCount(r.Context())
+
+		requestDataPage := &RequestDataPage{
+			Data:  requestData,
+			Pages: paging.Pages(totalRequestCount),
+		}
+
+		render.JSON(w, r, requestDataPage)
+	}
+}
+
+// GetUserRequests gets all user requests.
+func GetUserRequests(
+	repo interface {
+		model.HasGetUserRequests
+		model.HasGetTotalUserRequestCount
+	},
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		paging, _ := r.Context().Value(PageCtxKey).(*Paging)
+
+		userID := chi.URLParam(r, "userID")
+		if userID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		requestData, err := repo.GetUserRequests(r.Context(), userID, paging.Offset(), paging.Size)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+		totalRequestCount, err := repo.GetTotalUserRequestCount(r.Context(), userID)
 
 		requestDataPage := &RequestDataPage{
 			Data:  requestData,
