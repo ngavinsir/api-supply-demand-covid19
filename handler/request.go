@@ -26,7 +26,7 @@ func (res *RequestResource) router() *chi.Mux {
 	r.Group(func(r chi.Router) {
 		r.Use(AuthMiddleware)
 		r.Use(UserCtx(res.userDatastore))
-		
+
 		r.Post("/", CreateRequest(res.requestDatastore))
 		r.Put("/{requestID}", UpdateRequest(res.requestDatastore))
 	})
@@ -76,7 +76,7 @@ func UpdateRequest(repo interface{ model.HasUpdateRequest }) http.HandlerFunc {
 			return
 		}
 
-		request, err := repo.UpdateRequest(r.Context(), data.RequestItems, user.ID, requestID)
+		request, err := repo.UpdateRequest(r.Context(), data.RequestItems, requestID)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
@@ -184,7 +184,7 @@ func (req *UpdateRequestRequest) Bind(r *http.Request) error {
 		return ErrMissingReqFields
 	}
 	zeroBig := &decimal.Big{}
-	for _, requestItem := range(req.RequestItems) {
+	for _, requestItem := range req.RequestItems {
 		if requestItem.ItemID == "" || requestItem.ID == "" || requestItem.UnitID == "" || requestItem.Quantity.Big.Cmp(zeroBig) == 0 {
 			return ErrMissingReqFields
 		}
