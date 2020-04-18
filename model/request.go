@@ -44,9 +44,9 @@ type HasGetRequest interface {
 	GetRequest(ctx context.Context, requestID string) (*RequestData, error)
 }
 
-// HasUpdateRequest handles update existsing requests
+// HasUpdateRequest handles update existing request.
 type HasUpdateRequest interface {
-	UpdateRequest(ctx context.Context, requestItems []*models.RequestItem, applicantID string, requestID string) (*RequestData, error)
+	UpdateRequest(ctx context.Context, requestItems []*models.RequestItem, requestID string) (*RequestData, error)
 }
 
 // RequestDatastore holds db information.
@@ -135,11 +135,10 @@ func (db *RequestDatastore) CreateRequest(
 	return requestData, nil
 }
 
-// UpdateRequest handles new request creation with given request items and applicant id.
+// UpdateRequest handles new request creation with given request items and request id.
 func (db *RequestDatastore) UpdateRequest(
 	ctx context.Context,
 	requestItems []*models.RequestItem,
-	applicantID string,
 	requestID string,
 ) (*RequestData, error) {
 	tx, err := db.BeginTx(ctx, nil)
@@ -149,7 +148,7 @@ func (db *RequestDatastore) UpdateRequest(
 
 	request, err := models.FindRequest(ctx, tx, requestID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("can't find request with id: %s", requestID)
 	}
 
 	if request.IsFulfilled {
@@ -168,7 +167,6 @@ func (db *RequestDatastore) UpdateRequest(
 				models.RequestItemWhere.ID.EQ(item.ID),
 				models.RequestItemWhere.RequestID.EQ(request.ID),
 			).One(ctx, db); err != nil {
-				tx.Rollback()
 				resultChan <- struct {
 					*models.RequestItem
 					error
@@ -180,7 +178,6 @@ func (db *RequestDatastore) UpdateRequest(
 			item.L.LoadUnit(ctx, db, true, item, nil)
 
 			if _, err := item.Update(ctx, tx, boil.Infer()); err != nil {
-				tx.Rollback()
 				resultChan <- struct {
 					*models.RequestItem
 					error
@@ -218,6 +215,7 @@ func (db *RequestDatastore) UpdateRequest(
 
 	err = tx.Commit()
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
