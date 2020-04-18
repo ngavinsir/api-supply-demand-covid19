@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/ericlagergren/decimal"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/ngavinsir/api-supply-demand-covid19/model"
@@ -28,7 +29,7 @@ func (res *DonationResource) router() *chi.Mux {
 		r.Use(UserCtx(res.UserDatastore))
 
 		r.Post("/", CreateOrUpdateDonation(res.DonationDataStore, model.CreateAction))
-		r.Put("/", CreateOrUpdateDonation(res.DonationDataStore, model.UpdateAction))
+		r.Put("/{donationID}", UpdateDonation(res.DonationDataStore))
 		r.Put("/{donationID}/accept", AcceptDonation(res.DonationDataStore, res.StockDataStore))
 	})
 
@@ -53,6 +54,33 @@ func CreateOrUpdateDonation(repo interface {
 		}
 
 		request, err := repo.CreateOrUpdateDonation(r.Context(), data.DonationItems, user.ID, action)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+
+		render.JSON(w, r, request)
+	}
+}
+
+// UpdateDonation handles donation update
+func UpdateDonation(repo interface{ model.HasUpdateDonation }) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		donationID := chi.URLParam(r, "donationID")
+
+		data := &UpdateDonationRequest{}
+		if err := render.Bind(r, data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleDonator && user.Role != model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
+		request, err := repo.UpdateDonation(r.Context(), data.DonationItems, donationID)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
@@ -172,8 +200,28 @@ func (req *CreateDonationRequest) Bind(r *http.Request) error {
 	return nil
 }
 
+// UpdateDonationRequest struct
+type UpdateDonationRequest struct {
+	DonationItems models.DonationItemSlice `json:"donationItems"`
+}
+
+// Bind UpdateDonation ([]DonationItem) [Required]
+func (req *UpdateDonationRequest) Bind(r *http.Request) error {
+	if req.DonationItems == nil || len(req.DonationItems) == 0 {
+		return ErrMissingReqFields
+	}
+	zeroBig := &decimal.Big{}
+	for _, donationItem := range req.DonationItems {
+		if donationItem.ItemID == "" || donationItem.ID == "" || donationItem.UnitID == "" || donationItem.Quantity.Big.Cmp(zeroBig) == 0 {
+			return ErrMissingReqFields
+		}
+	}
+
+	return nil
+}
+
 // DonationDataPage struct
 type DonationDataPage struct {
 	Data  []*model.DonationData `boil:"data" json:"data"`
-	Pages *Page                `boil:"pages" json:"pages"`
+	Pages *Page                 `boil:"pages" json:"pages"`
 }
