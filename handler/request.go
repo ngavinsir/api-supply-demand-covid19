@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 
+	"github.com/ericlagergren/decimal"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/ngavinsir/api-supply-demand-covid19/model"
@@ -48,7 +49,7 @@ func CreateRequest(repo interface{ model.HasCreateRequest }) http.HandlerFunc {
 			return
 		}
 
-		request, err := repo.CreateRequest(r.Context(), *data.RequestItems, user.ID)
+		request, err := repo.CreateRequest(r.Context(), data.RequestItems, user.ID)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
@@ -75,7 +76,7 @@ func UpdateRequest(repo interface{ model.HasUpdateRequest }) http.HandlerFunc {
 			return
 		}
 
-		request, err := repo.UpdateRequest(r.Context(), *data.RequestItems, user.ID, requestID)
+		request, err := repo.UpdateRequest(r.Context(), data.RequestItems, user.ID, requestID)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
@@ -160,27 +161,33 @@ func GetRequest(repo interface{ model.HasGetRequest }) http.HandlerFunc {
 
 // CreateRequestRequest struct
 type CreateRequestRequest struct {
-	RequestItems *models.RequestItemSlice `json:"requestItems"`
-}
-
-// UpdateRequestRequest struct
-type UpdateRequestRequest struct {
-	RequestItems *models.RequestItemSlice `json:"requestItems"`
+	RequestItems models.RequestItemSlice `json:"requestItems"`
 }
 
 // Bind RegisterRequest ([]RequestItem) [Required]
 func (req *CreateRequestRequest) Bind(r *http.Request) error {
-	if req.RequestItems == nil || len(*req.RequestItems) == 0 {
+	if req.RequestItems == nil || len(req.RequestItems) == 0 {
 		return ErrMissingReqFields
 	}
 
 	return nil
 }
 
-// Bind RegisterRequest ([]RequestItem) [Required]
+// UpdateRequestRequest struct
+type UpdateRequestRequest struct {
+	RequestItems models.RequestItemSlice `json:"requestItems"`
+}
+
+// Bind UpdateRequest ([]RequestItem) [Required]
 func (req *UpdateRequestRequest) Bind(r *http.Request) error {
-	if req.RequestItems == nil || len(*req.RequestItems) == 0 {
+	if req.RequestItems == nil || len(req.RequestItems) == 0 {
 		return ErrMissingReqFields
+	}
+	zeroBig := &decimal.Big{}
+	for _, requestItem := range(req.RequestItems) {
+		if requestItem.ItemID == "" || requestItem.ID == "" || requestItem.UnitID == "" || requestItem.Quantity.Big.Cmp(zeroBig) == 0 {
+			return ErrMissingReqFields
+		}
 	}
 
 	return nil

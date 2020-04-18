@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ngavinsir/api-supply-demand-covid19/models"
@@ -171,7 +172,7 @@ func (db *RequestDatastore) UpdateRequest(
 				resultChan <- struct {
 					*models.RequestItem
 					error
-				}{nil, err}
+				}{nil, fmt.Errorf("can't find request item with id: %s", item.ID)}
 			}
 
 			item.RequestID = requestID
