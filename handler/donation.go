@@ -28,7 +28,7 @@ func (store *DonationResource) router() *chi.Mux {
 
 // CreateOrUpdateDonation return donations
 func CreateOrUpdateDonation(repo interface {
-	model.HasCreateOrUpdate
+	model.HasCreateOrUpdateDonation
 }, action string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := &CreateDonationRequest{}

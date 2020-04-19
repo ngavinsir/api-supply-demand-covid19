@@ -10,13 +10,14 @@ import (
 	"github.com/volatiletech/sqlboiler/boil"
 )
 
+// Const for create or update action.
 const (
 	CreateAction = "CREATE"
 	UpdateAction = "UPDATE"
 )
 
-// HasCreateOrUpdate handles get donation data.
-type HasCreateOrUpdate interface {
+// HasCreateOrUpdateDonation handles get donation data.
+type HasCreateOrUpdateDonation interface {
 	CreateOrUpdateDonation(ctx context.Context, data []*models.DonationItem, userID string, action string) (*DonationData, error)
 }
 
