@@ -32,8 +32,14 @@
         "requestItems": [
             {
                 "id": "1Zw60dckGOR6v7nIA0UofRWrWMl",
-                "item": "Masker",
-                "unit": "Buah",
+                "item": {
+                    "id":"1",
+                    "name":"Masker"
+                },
+                "unit": {
+                    "id":"1",
+                    "name":"Buah"
+                },
                 "quantity": "11"
             },
             {
@@ -73,14 +79,26 @@
                 "requestItems": [
                     {
                         "id": "1Zw6eJgNwKNuLu3rH3WqbeYoq6n",
-                        "item": "Hand Sanitizer",
-                        "unit": "Liter",
+                        "item": {
+                            "id":"2",
+                            "name":"Hand Sanitizer"
+                        },
+                        "unit": {
+                            "id":"2",
+                            "name":"Liter"
+                        },
                         "quantity": "22.13"
                     },
                     {
                         "id": "1Zw6eKbga0OzptlUPa8UgcXIGfN",
-                        "item": "Masker",
-                        "unit": "Buah",
+                        "item": {
+                            "id":"1",
+                            "name":"Masker"
+                        },
+                        "unit": {
+                            "id":"1",
+                            "name":"Buah"
+                        },
                         "quantity": "11.00"
                     }
                 ]
@@ -129,14 +147,26 @@
         "requestItems": [
             {
                 "id": "1Zw60dckGOR6v7nIA0UofRWrWMl",
-                "item": "Masker",
-                "unit": "Buah",
+                "item": {
+                    "id":"1",
+                    "name":"Masker"
+                },
+                "unit": {
+                    "id":"1",
+                    "name":"Buah"
+                },
                 "quantity": "11"
             },
             {
                 "id": "1Zw60kCOybHjxtQdXRTk6xf2cAw",
-                "item": "Hand Sanitizer",
-                "unit": "Liter",
+                "item": {
+                    "id":"2",
+                    "name":"Hand Sanitizer"
+                },
+                "unit": {
+                    "id":"2",
+                    "name":"Liter"
+                },
                 "quantity": "22.13"
             }
         ]
@@ -169,14 +199,26 @@
             "requestItems": [
                 {
                     "id": "1Zw6eJgNwKNuLu3rH3WqbeYoq6n",
-                    "item": "Hand Sanitizer",
-                    "unit": "Liter",
+                    "item": {
+                        "id":"2",
+                        "name":"Hand Sanitizer"
+                    },
+                    "unit": {
+                        "id":"2",
+                        "name":"Liter"
+                    },
                     "quantity": "22.13"
                 },
                 {
                     "id": "1Zw6eKbga0OzptlUPa8UgcXIGfN",
-                    "item": "Masker",
-                    "unit": "Buah",
+                    "item": {
+                        "id":"1",
+                        "name":"Masker"
+                    },
+                    "unit": {
+                        "id":"1",
+                        "name":"Buah"
+                    },
                     "quantity": "11.00"
                 }
             ]
@@ -211,8 +253,14 @@
                 "requestItems": [
                     {
                         "id": "1aMhkuANqCoTPHj7EkA5NFrkkna",
-                        "item": "Masker",
-                        "unit": "Buah",
+                        "item": {
+                            "id":"1",
+                            "name":"Masker"
+                        },
+                        "unit": {
+                            "id":"1",
+                            "name":"Buah"
+                        },
                         "quantity": "2.50"
                     }
                 ]
