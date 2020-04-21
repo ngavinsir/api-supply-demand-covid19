@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/ngavinsir/api-supply-demand-covid19/models"
@@ -13,19 +14,25 @@ import (
 	"github.com/volatiletech/sqlboiler/types"
 )
 
+// Const for create or update action.
 const (
 	CreateAction = "CREATE"
 	UpdateAction = "UPDATE"
 )
 
-// HasCreateOrUpdate handles get donation data.
-type HasCreateOrUpdate interface {
+// HasCreateOrUpdateDonation handles get donation data.
+type HasCreateOrUpdateDonation interface {
 	CreateOrUpdateDonation(ctx context.Context, data []*models.DonationItem, userID string, action string) (*DonationData, error)
 }
 
 // HasAcceptDonation accepts donation by given id.
 type HasAcceptDonation interface {
 	AcceptDonation(ctx context.Context, donationID string, stockRepo interface{ HasCreateOrUpdateStock }) error
+}
+
+// HasUpdateDonation handles update existing donation.
+type HasUpdateDonation interface {
+	UpdateDonation(ctx context.Context, donationItems []*models.DonationItem, donationID string) (*DonationData, error)
 }
 
 // HasGetDonation handles get donation detail
@@ -202,6 +209,94 @@ func (db *DonationDataStore) AcceptDonation(
 	}
 
 	return nil
+}
+
+// UpdateDonation updates donation with given donation items and donation id.
+func (db *DonationDataStore) UpdateDonation(
+	ctx context.Context,
+	donationItems []*models.DonationItem,
+	donationID string,
+) (*DonationData, error) {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	donation, err := models.FindDonation(ctx, tx, donationID)
+	if err != nil {
+		return nil, fmt.Errorf("can't find donation with id: %s", donationID)
+	}
+
+	if donation.IsAccepted {
+		return nil, errors.New("donation has already been accepted")
+	}
+
+	var items []*DonationItemData
+	resultChan := make(chan struct {
+		*models.DonationItem
+		error
+	})
+
+	for _, item := range donationItems {
+		go func(item *models.DonationItem, donationID string) {
+			if _, err := models.DonationItems(
+				models.DonationItemWhere.ID.EQ(item.ID),
+				models.DonationItemWhere.DonationID.EQ(donation.ID),
+			).One(ctx, db); err != nil {
+				resultChan <- struct {
+					*models.DonationItem
+					error
+				}{nil, fmt.Errorf("can't find donation item with id: %s", item.ID)}
+			}
+
+			item.DonationID = donationID
+			item.L.LoadItem(ctx, db, true, item, nil)
+			item.L.LoadUnit(ctx, db, true, item, nil)
+
+			if _, err := item.Update(ctx, tx, boil.Infer()); err != nil {
+				resultChan <- struct {
+					*models.DonationItem
+					error
+				}{nil, err}
+			}
+
+			resultChan <- struct {
+				*models.DonationItem
+				error
+			}{item, nil}
+		}(item, donationID)
+	}
+
+	for i := 0; i < len(donationItems); i++ {
+		result := <-resultChan
+		if result.error != nil {
+			tx.Rollback()
+			return nil, result.error
+		}
+		items = append(items, &DonationItemData{
+			ID:         result.DonationItem.ID,
+			DonationID: result.DonationItem.DonationID,
+			Item:       result.DonationItem.R.Item,
+			Unit:       result.DonationItem.R.Unit,
+			Quantity:   result.DonationItem.Quantity,
+		})
+	}
+
+	donationData := &DonationData{
+		ID:            donation.ID,
+		Date:          donation.Date,
+		IsAccepted:    donation.IsAccepted,
+		IsDonated:     donation.IsDonated,
+		DonationItems: items,
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	return donationData, nil
 }
 
 // GetDonation handles get donation detail by given id

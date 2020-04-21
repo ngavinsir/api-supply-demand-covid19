@@ -169,7 +169,6 @@ func testUpdateRequest(repo *RequestDatastore, unitID string, itemID string, use
 			requestData, err := repo.UpdateRequest(
 				context.Background(),
 				requestItems,
-				userID,
 				request.ID,
 			)
 			if err != nil {
@@ -233,7 +232,6 @@ func testUpdateRequestWhenFulfilled(repo *RequestDatastore, unitID string, itemI
 		_, err = repo.UpdateRequest(
 			context.Background(),
 			items,
-			userID,
 			request.ID,
 		)
 
@@ -298,8 +296,8 @@ func testGetUserRequests(repo *RequestDatastore, userID string) func(t *testing.
 		if err != nil {
 			t.Error(err)
 		}
-		
-		for _, request := range(requests) {
+
+		for _, request := range requests {
 			if got, want := request.DonationApplicant.ID, userID; got != want {
 				t.Errorf("Want request donation applicant id %s, got %s", want, got)
 			}

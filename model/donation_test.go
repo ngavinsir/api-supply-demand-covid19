@@ -40,7 +40,6 @@ func TestDonation(t *testing.T) {
 	donationDatastore := &DonationDataStore{DB: db}
 
 	t.Run("Create", testCreateDonation(donationDatastore, &StockDataStore{DB: db}))
-	t.Run("Update", testUpdateDonation(donationDatastore))
 	t.Run("Get", testGetDonation(donationDatastore))
 	t.Run("Get user", testGetUserDonation(donationDatastore))
 }
@@ -122,75 +121,67 @@ func testCreateDonation(repo *DonationDataStore, stockRepo *StockDataStore) func
 		}
 		wg.Wait()
 
+		t.Run("Update", testUpdateDonation(repo, testDonationUserID))
 		t.Run("Accept", testAcceptDonation(repo, stockRepo, d))
 	}
 }
 
-func testUpdateDonation(repo *DonationDataStore) func(t *testing.T) {
+func testUpdateDonation(repo *DonationDataStore, userID string) func(t *testing.T) {
 	return func(t *testing.T) {
-		var quantity types.Decimal
-		quantity.Big, _ = new(decimal.Big).SetString("3")
-
 		item := &models.Item{
 			ID:   testDonationItemItemID2,
-			Name: "name2",
+			Name: testDonationItemItemID2,
 		}
 
 		item.Insert(context.Background(), repo, boil.Infer())
 
 		unit := &models.Unit{
 			ID:   testDonationItemUnitID2,
-			Name: "name2",
+			Name: testDonationItemUnitID2,
 		}
 
 		unit.Insert(context.Background(), repo, boil.Infer())
 
-		donations, _ := models.Donations().All(context.Background(), repo)
-
-		var wg sync.WaitGroup
-		for _, donation := range donations {
-			items, _ := models.DonationItems(qm.Where("donation_id=?", donation.ID)).All(context.Background(), repo)
-
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-
-				donationItem := []*models.DonationItem{}
-				for _, item := range items {
-					item.UnitID = testDonationItemUnitID2
-					item.ItemID = testDonationItemItemID2
-					item.Quantity = quantity
-
-					donationItem = append(donationItem, item)
-				}
-
-				donation, err := repo.CreateOrUpdateDonation(context.Background(), items, testDonationUserID, UpdateAction)
-				if err != nil {
-					t.Error(err)
-				}
-
-				if donation.ID == "" {
-					t.Errorf("Want donation id assigned, got %s", donation.ID)
-				}
-
-				if got, want := len(donation.DonationItems), len(donationItem); got != want {
-					t.Errorf("Want donation items length %d, got %d", want, got)
-				}
-
-				for i := 0; i < testDonationItemsLen; i++ {
-					if got, want := donation.DonationItems[i].DonationID, donation.ID; got != want {
-						t.Errorf("Want donation item donation id %s, got %s", want, got)
-					}
-				}
-
-				for i := 0; i < testDonationItemsLen; i++ {
-					if got, want := donation.DonationItems[i].Item.Name, "name2"; got != want {
-						t.Errorf("Want donation item item id %s, got %s", want, got)
-					}
-				}
-			}()
+		donations, err := models.Donations(qm.Load(models.DonationRels.DonationItems)).All(context.Background(), repo)
+		if err != nil {
+			t.Error(err)
 		}
-		wg.Wait()
+
+		for _, donation := range donations {
+			var quantity types.Decimal
+			quantity.Big, _ = new(decimal.Big).SetString(testDonationQuantity)
+
+			donationItems := donation.R.DonationItems
+			for _, item := range donationItems {
+				item.UnitID = testDonationItemUnitID2
+				item.ItemID = testDonationItemItemID2
+				item.Quantity = quantity
+			}
+
+			donationData, err := repo.UpdateDonation(
+				context.Background(),
+				donationItems,
+				donation.ID,
+			)
+			if err != nil {
+				t.Error(err)
+			}
+
+			for _, item := range donationData.DonationItems {
+				if got, want := item.DonationID, donation.ID; got != want {
+					t.Errorf("Want donation item id %s, got %s", want, got)
+				}
+				if got, want := item.Quantity, quantity; got != want {
+					t.Errorf("Want donation item quantity %s, got %s", want, got)
+				}
+				if got, want := item.Item.Name, testDonationItemItemID2; got != want {
+					t.Errorf("Want donation item item name %s, got %s", want, got)
+				}
+				if got, want := item.Unit.Name, testDonationItemUnitID2; got != want {
+					t.Errorf("Want donation item unit name %s, got %s", want, got)
+				}
+			}
+		}
 	}
 }
 
@@ -211,7 +202,7 @@ func testAcceptDonation(repo *DonationDataStore, stockRepo *StockDataStore, dona
 		}
 
 		stock, err := models.Stocks(
-			models.StockWhere.ItemID.EQ(testDonationItemItemID),
+			models.StockWhere.ItemID.EQ(testDonationItemItemID2),
 		).One(context.Background(), repo.DB)
 		if err != nil {
 			t.Error(err)

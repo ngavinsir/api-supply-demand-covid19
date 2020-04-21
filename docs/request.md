@@ -126,14 +126,10 @@
     {
         "requestItems": [
             {
-                "item_id": "2",
-                "unit_id": "3",
-                "quantity": 11
-            },
-            {
-                "item_id": "3",
-                "unit_id": "1Zim6hXOmUTiH28xubzTz2kA0ed",
-                "quantity": 22.13
+                "id": "1aMhkuANqCoTPHj7EkA5NFrkkna",
+                "unit_id": "1",
+                "item_id": "1",
+                "quantity": 3
             }
         ]
     }
@@ -141,12 +137,12 @@
 * Response Body:
     ```
     {
-        "id": "1Zw60g0nM99QJIJjN37SpIKlYF9",
-        "date": "2020-04-01T17:39:47.940516264+07:00",
+        "id": "1aMhktyXsy1gTLZOAtc2ObhOwnI",
+        "date": "2020-04-10T20:45:16.952605Z",
         "isFulfilled": false,
         "requestItems": [
             {
-                "id": "1Zw60dckGOR6v7nIA0UofRWrWMl",
+                "id": "1aMhkuANqCoTPHj7EkA5NFrkkna",
                 "item": {
                     "id":"1",
                     "name":"Masker"
@@ -155,19 +151,8 @@
                     "id":"1",
                     "name":"Buah"
                 },
-                "quantity": "11"
-            },
-            {
-                "id": "1Zw60kCOybHjxtQdXRTk6xf2cAw",
-                "item": {
-                    "id":"2",
-                    "name":"Hand Sanitizer"
-                },
-                "unit": {
-                    "id":"2",
-                    "name":"Liter"
-                },
-                "quantity": "22.13"
+                "quantity": "3",
+                "request_id": "1aMhktyXsy1gTLZOAtc2ObhOwnI"
             }
         ]
     }

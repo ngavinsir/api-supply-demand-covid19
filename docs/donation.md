@@ -97,7 +97,7 @@
 
 # Update Donation
 
-* Endpoint: `/api/v1/donations`
+* Endpoint: `/api/v1/donations/{donationID}`
 * HTTP Method: `PUT`
 * Request Header:
     * Accept: `application/json`
@@ -108,40 +108,29 @@
     {
         "donationItems": [
             {
-                "id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
-                "donation_id": "1ZlfXsUn4fYgvWc7Ke6SZSNuDPn",
-                "item_id": "1",
+                "id": "1aMeoatjtEKeCdisz1sbCTnsiQe",
                 "unit_id": "1",
-                "quantity": "10"
-            },
-            {
-                "id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
-                "donation_id": "1ZlfXsUn4fYgvWc7Ke6SZSNuDPn",
                 "item_id": "1",
-                "unit_id": "1",
-                "quantity": "10"
-            },
+                "quantity": 10.1
+            }
         ]
     }
     ```
 * Response Body:
     ```
     {
-        "donation": {
-            "id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
-            "date": "2020-03-29T01:04:03.458704516+07:00",
-            "is_accepted": false,
-            "is_donated": false,
-            "donator_id": "1ZiESUvzPPP0r9SCTtkt84eAGfP"
-        },
-        "items": [
+        "id": "1aMeoehZkXbki1xJo47X6FwBtcU",
+        "date": "2020-04-10T20:21:05.053957Z",
+        "isAccepted": false,
+        "isDonated": false,
+        "donationItems": [
             {
-                "id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
-                "donation_id": "1ZlfXsUn4fYgvWc7Ke6SZSNuDPn",
-                "item_id": "1",
-                "unit_id": "1",
-                "quantity": "10"
-            },
+                "id": "1aMeoatjtEKeCdisz1sbCTnsiQe",
+                "item": "Masker",
+                "unit": "Buah",
+                "quantity": "10.1",
+                "donation_id": "1aMeoehZkXbki1xJo47X6FwBtcU"
+            }
         ]
     }
     ```
