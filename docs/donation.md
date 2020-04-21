@@ -73,8 +73,14 @@
                 "donationItems": [
                     {
                         "id": "1aMeoatjtEKeCdisz1sbCTnsiQe",
-                        "item": "Masker",
-                        "unit": "Buah",
+                        "item": {
+                            "id":"1",
+                            "name":"Masker"
+                        },
+                        "unit": {
+                            "id":"1",
+                            "name":"Buah"
+                        },
                         "quantity": "10.00"
                     }
                 ]
@@ -177,8 +183,14 @@
         "donationItems": [
             {
                 "id": "1aMeoatjtEKeCdisz1sbCTnsiQe",
-                "item": "Masker",
-                "unit": "Buah",
+                "item": {
+                    "id":"1",
+                    "name":"Masker"
+                },
+                "unit": {
+                    "id":"1",
+                    "name":"Buah"
+                },
                 "quantity": "10.00"
             }
         ]
@@ -213,8 +225,14 @@
                 "donationItems": [
                     {
                         "id": "1aMeoatjtEKeCdisz1sbCTnsiQe",
-                        "item": "Masker",
-                        "unit": "Buah",
+                        "item": {
+                            "id":"1",
+                            "name":"Masker"
+                        },
+                        "unit": {
+                            "id":"1",
+                            "name":"Buah"
+                        },
                         "quantity": "10.00"
                     }
                 ]
