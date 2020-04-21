@@ -113,8 +113,8 @@ func (db *RequestDatastore) CreateRequest(
 		}
 		items = append(items, &RequestItemData{
 			ID:       result.RequestItem.ID,
-			Item:     result.RequestItem.R.Item.Name,
-			Unit:     result.RequestItem.R.Unit.Name,
+			Item:     result.RequestItem.R.Item,
+			Unit:     result.RequestItem.R.Unit,
 			Quantity: result.RequestItem.Quantity,
 		})
 	}
@@ -202,8 +202,8 @@ func (db *RequestDatastore) UpdateRequest(
 		items = append(items, &RequestItemData{
 			ID:        result.RequestItem.ID,
 			RequestID: result.RequestItem.RequestID,
-			Item:      result.RequestItem.R.Item.Name,
-			Unit:      result.RequestItem.R.Unit.Name,
+			Item:      result.RequestItem.R.Item,
+			Unit:      result.RequestItem.R.Unit,
 			Quantity:  result.RequestItem.Quantity,
 		})
 	}
@@ -244,8 +244,8 @@ func (db *RequestDatastore) GetAllRequest(ctx context.Context, offset int, limit
 		for _, item := range r.R.RequestItems {
 			requestItems = append(requestItems, &RequestItemData{
 				ID:       item.ID,
-				Item:     item.R.Item.Name,
-				Unit:     item.R.Unit.Name,
+				Item:     item.R.Item,
+				Unit:     item.R.Unit,
 				Quantity: item.Quantity,
 			})
 		}
@@ -284,8 +284,8 @@ func (db *RequestDatastore) GetUserRequests(ctx context.Context, userID string, 
 		for _, item := range r.R.RequestItems {
 			requestItems = append(requestItems, &RequestItemData{
 				ID:       item.ID,
-				Item:     item.R.Item.Name,
-				Unit:     item.R.Unit.Name,
+				Item:     item.R.Item,
+				Unit:     item.R.Unit,
 				Quantity: item.Quantity,
 			})
 		}
@@ -345,8 +345,8 @@ func (db *RequestDatastore) GetRequest(
 
 		requestItemData := &RequestItemData{
 			ID:       item.ID,
-			Item:     item.R.Item.Name,
-			Unit:     item.R.Unit.Name,
+			Item:     item.R.Item,
+			Unit:     item.R.Unit,
 			Quantity: item.Quantity,
 		}
 
@@ -373,10 +373,11 @@ type RequestData struct {
 	RequestItems      []*RequestItemData `json:"requestItems"`
 }
 
+// RequestItemData struct.
 type RequestItemData struct {
 	ID        string        `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Item      string        `boil:"item" json:"item" toml:"item" yaml:"item"`
-	Unit      string        `boil:"unit" json:"unit" toml:"unit" yaml:"unit"`
+	Item      *models.Item  `boil:"item" json:"item" toml:"item" yaml:"item"`
+	Unit      *models.Unit  `boil:"unit" json:"unit" toml:"unit" yaml:"unit"`
 	Quantity  types.Decimal `boil:"quantity" json:"quantity" toml:"quantity" yaml:"quantity"`
 	RequestID string        `boil:"request_id" json:"request_id,omitempty" toml:"request_id" yaml:"request_id"`
 }
