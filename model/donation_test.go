@@ -174,10 +174,10 @@ func testUpdateDonation(repo *DonationDataStore, userID string) func(t *testing.
 				if got, want := item.Quantity, quantity; got != want {
 					t.Errorf("Want donation item quantity %s, got %s", want, got)
 				}
-				if got, want := item.Item, testDonationItemItemID2; got != want {
+				if got, want := item.Item.Name, testDonationItemItemID2; got != want {
 					t.Errorf("Want donation item item name %s, got %s", want, got)
 				}
-				if got, want := item.Unit, testDonationItemUnitID2; got != want {
+				if got, want := item.Unit.Name, testDonationItemUnitID2; got != want {
 					t.Errorf("Want donation item unit name %s, got %s", want, got)
 				}
 			}

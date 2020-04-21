@@ -133,8 +133,8 @@ func (db *DonationDataStore) CreateOrUpdateDonation(
 		}
 		items = append(items, &DonationItemData{
 			ID:         result.DonationItem.ID,
-			Item:       result.DonationItem.R.Item.Name,
-			Unit:       result.DonationItem.R.Unit.Name,
+			Item:       result.DonationItem.R.Item,
+			Unit:       result.DonationItem.R.Unit,
 			Quantity:   result.DonationItem.Quantity,
 			DonationID: result.DonationItem.DonationID,
 		})
@@ -276,8 +276,8 @@ func (db *DonationDataStore) UpdateDonation(
 		items = append(items, &DonationItemData{
 			ID:         result.DonationItem.ID,
 			DonationID: result.DonationItem.DonationID,
-			Item:       result.DonationItem.R.Item.Name,
-			Unit:       result.DonationItem.R.Unit.Name,
+			Item:       result.DonationItem.R.Item,
+			Unit:       result.DonationItem.R.Unit,
 			Quantity:   result.DonationItem.Quantity,
 		})
 	}
@@ -320,8 +320,8 @@ func (db *DonationDataStore) GetDonation(
 	for _, item := range donation.R.DonationItems {
 		donationItems = append(donationItems, &DonationItemData{
 			ID:       item.ID,
-			Item:     item.R.Item.Name,
-			Unit:     item.R.Unit.Name,
+			Item:     item.R.Item,
+			Unit:     item.R.Unit,
 			Quantity: item.Quantity,
 		})
 	}
@@ -360,8 +360,8 @@ func (db *DonationDataStore) GetUserDonations(ctx context.Context, userID string
 		for _, item := range d.R.DonationItems {
 			donationItems = append(donationItems, &DonationItemData{
 				ID:       item.ID,
-				Item:     item.R.Item.Name,
-				Unit:     item.R.Unit.Name,
+				Item:     item.R.Item,
+				Unit:     item.R.Unit,
 				Quantity: item.Quantity,
 			})
 		}
@@ -400,8 +400,8 @@ func (db *DonationDataStore) GetAllDonations(ctx context.Context, offset int, li
 		for _, item := range d.R.DonationItems {
 			donationItems = append(donationItems, &DonationItemData{
 				ID:       item.ID,
-				Item:     item.R.Item.Name,
-				Unit:     item.R.Unit.Name,
+				Item:     item.R.Item,
+				Unit:     item.R.Unit,
 				Quantity: item.Quantity,
 			})
 		}
@@ -454,8 +454,8 @@ type DonationData struct {
 // DonationItemData struct
 type DonationItemData struct {
 	ID         string        `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Item       string        `boil:"item" json:"item" toml:"item" yaml:"item"`
-	Unit       string        `boil:"unit" json:"unit" toml:"unit" yaml:"unit"`
+	Item       *models.Item  `boil:"item" json:"item" toml:"item" yaml:"item"`
+	Unit       *models.Unit  `boil:"unit" json:"unit" toml:"unit" yaml:"unit"`
 	Quantity   types.Decimal `boil:"quantity" json:"quantity" toml:"quantity" yaml:"quantity"`
 	DonationID string        `boil:"donation_id" json:"donation_id,omitempty" toml:"donation_id" yaml:"donation_id"`
 }

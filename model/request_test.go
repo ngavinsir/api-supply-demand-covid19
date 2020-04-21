@@ -182,10 +182,10 @@ func testUpdateRequest(repo *RequestDatastore, unitID string, itemID string, use
 				if got, want := item.Quantity, quantity; got != want {
 					t.Errorf("Want request item quantity %s, got %s", want, got)
 				}
-				if got, want := item.Item, testItemName2; got != want {
+				if got, want := item.Item.Name, testItemName2; got != want {
 					t.Errorf("Want request item item name %s, got %s", want, got)
 				}
-				if got, want := item.Unit, testUnitName2; got != want {
+				if got, want := item.Unit.Name, testUnitName2; got != want {
 					t.Errorf("Want request item unit name %s, got %s", want, got)
 				}
 			}
