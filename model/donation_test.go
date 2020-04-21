@@ -36,7 +36,7 @@ func TestDonation(t *testing.T) {
 		database.ResetTestDB(db)
 		db.Close()
 	}()
-	
+
 	donationDatastore := &DonationDataStore{DB: db}
 
 	t.Run("Create", testCreateDonation(donationDatastore, &StockDataStore{DB: db}))
@@ -184,7 +184,7 @@ func testUpdateDonation(repo *DonationDataStore) func(t *testing.T) {
 				}
 
 				for i := 0; i < testDonationItemsLen; i++ {
-					if got, want := donation.DonationItems[i].Item, "name2"; got != want {
+					if got, want := donation.DonationItems[i].Item.Name, "name2"; got != want {
 						t.Errorf("Want donation item item id %s, got %s", want, got)
 					}
 				}
@@ -201,7 +201,7 @@ func testAcceptDonation(repo *DonationDataStore, stockRepo *StockDataStore, dona
 			t.Error(err)
 		}
 
-		donation, err := models.FindDonation(context.Background(), repo.DB, donationID) 
+		donation, err := models.FindDonation(context.Background(), repo.DB, donationID)
 		if err != nil {
 			t.Error(err)
 		}
@@ -263,7 +263,7 @@ func testGetUserDonation(repo *DonationDataStore) func(t *testing.T) {
 			t.Error(err)
 		}
 
-		for _, donation := range(donations) {
+		for _, donation := range donations {
 			if got, want := donation.Donator.ID, testDonationUserID; got != want {
 				t.Errorf("Want donator id %s, got %s", want, got)
 			}
