@@ -130,7 +130,7 @@ func (db *AllocationDatastore) CreateAllocation(
 	allocationData := &AllocationData{
 		ID:              allocation.ID,
 		Date:            allocation.Date,
-		AdminID:         allocation.AllocatorID,
+		AllocatorID:     allocation.AllocatorID,
 		PhotoURL:        allocation.PhotoURL.String,
 		RequestID:       allocation.RequestID,
 		AllocationItems: items,
@@ -149,7 +149,7 @@ type AllocationData struct {
 	ID              string                `json:"id"`
 	Date            time.Time             `json:"date"`
 	RequestID       string                `json:"requestID"`
-	AdminID         string                `json:"adminID"`
+	AllocatorID     string                `json:"allocatorID"`
 	PhotoURL        string                `json:"photoUrl"`
 	AllocationItems []*AllocationItemData `json:"items"`
 }
