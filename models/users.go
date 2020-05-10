@@ -76,12 +76,12 @@ var UserWhere = struct {
 
 // UserRels is where relationship names are stored.
 var UserRels = struct {
-	AdminAllocations          string
+	AllocatorAllocations      string
 	DonatorDonations          string
 	PasswordResetRequests     string
 	DonationApplicantRequests string
 }{
-	AdminAllocations:          "AdminAllocations",
+	AllocatorAllocations:      "AllocatorAllocations",
 	DonatorDonations:          "DonatorDonations",
 	PasswordResetRequests:     "PasswordResetRequests",
 	DonationApplicantRequests: "DonationApplicantRequests",
@@ -89,7 +89,7 @@ var UserRels = struct {
 
 // userR is where relationships are stored.
 type userR struct {
-	AdminAllocations          AllocationSlice
+	AllocatorAllocations      AllocationSlice
 	DonatorDonations          DonationSlice
 	PasswordResetRequests     PasswordResetRequestSlice
 	DonationApplicantRequests RequestSlice
@@ -385,15 +385,15 @@ func (q userQuery) Exists(ctx context.Context, exec boil.ContextExecutor) (bool,
 	return count > 0, nil
 }
 
-// AdminAllocations retrieves all the allocation's Allocations with an executor via admin_id column.
-func (o *User) AdminAllocations(mods ...qm.QueryMod) allocationQuery {
+// AllocatorAllocations retrieves all the allocation's Allocations with an executor via allocator_id column.
+func (o *User) AllocatorAllocations(mods ...qm.QueryMod) allocationQuery {
 	var queryMods []qm.QueryMod
 	if len(mods) != 0 {
 		queryMods = append(queryMods, mods...)
 	}
 
 	queryMods = append(queryMods,
-		qm.Where("\"allocations\".\"admin_id\"=?", o.ID),
+		qm.Where("\"allocations\".\"allocator_id\"=?", o.ID),
 	)
 
 	query := Allocations(queryMods...)
@@ -469,9 +469,9 @@ func (o *User) DonationApplicantRequests(mods ...qm.QueryMod) requestQuery {
 	return query
 }
 
-// LoadAdminAllocations allows an eager lookup of values, cached into the
+// LoadAllocatorAllocations allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for a 1-M or N-M relationship.
-func (userL) LoadAdminAllocations(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
+func (userL) LoadAllocatorAllocations(ctx context.Context, e boil.ContextExecutor, singular bool, maybeUser interface{}, mods queries.Applicator) error {
 	var slice []*User
 	var object *User
 
@@ -508,7 +508,7 @@ func (userL) LoadAdminAllocations(ctx context.Context, e boil.ContextExecutor, s
 		return nil
 	}
 
-	query := NewQuery(qm.From(`allocations`), qm.WhereIn(`allocations.admin_id in ?`, args...))
+	query := NewQuery(qm.From(`allocations`), qm.WhereIn(`allocations.allocator_id in ?`, args...))
 	if mods != nil {
 		mods.Apply(query)
 	}
@@ -538,24 +538,24 @@ func (userL) LoadAdminAllocations(ctx context.Context, e boil.ContextExecutor, s
 		}
 	}
 	if singular {
-		object.R.AdminAllocations = resultSlice
+		object.R.AllocatorAllocations = resultSlice
 		for _, foreign := range resultSlice {
 			if foreign.R == nil {
 				foreign.R = &allocationR{}
 			}
-			foreign.R.Admin = object
+			foreign.R.Allocator = object
 		}
 		return nil
 	}
 
 	for _, foreign := range resultSlice {
 		for _, local := range slice {
-			if local.ID == foreign.AdminID {
-				local.R.AdminAllocations = append(local.R.AdminAllocations, foreign)
+			if local.ID == foreign.AllocatorID {
+				local.R.AllocatorAllocations = append(local.R.AllocatorAllocations, foreign)
 				if foreign.R == nil {
 					foreign.R = &allocationR{}
 				}
-				foreign.R.Admin = local
+				foreign.R.Allocator = local
 				break
 			}
 		}
@@ -849,22 +849,22 @@ func (userL) LoadDonationApplicantRequests(ctx context.Context, e boil.ContextEx
 	return nil
 }
 
-// AddAdminAllocations adds the given related objects to the existing relationships
+// AddAllocatorAllocations adds the given related objects to the existing relationships
 // of the user, optionally inserting them as new records.
-// Appends related to o.R.AdminAllocations.
-// Sets related.R.Admin appropriately.
-func (o *User) AddAdminAllocations(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Allocation) error {
+// Appends related to o.R.AllocatorAllocations.
+// Sets related.R.Allocator appropriately.
+func (o *User) AddAllocatorAllocations(ctx context.Context, exec boil.ContextExecutor, insert bool, related ...*Allocation) error {
 	var err error
 	for _, rel := range related {
 		if insert {
-			rel.AdminID = o.ID
+			rel.AllocatorID = o.ID
 			if err = rel.Insert(ctx, exec, boil.Infer()); err != nil {
 				return errors.Wrap(err, "failed to insert into foreign table")
 			}
 		} else {
 			updateQuery := fmt.Sprintf(
 				"UPDATE \"allocations\" SET %s WHERE %s",
-				strmangle.SetParamNames("\"", "\"", 1, []string{"admin_id"}),
+				strmangle.SetParamNames("\"", "\"", 1, []string{"allocator_id"}),
 				strmangle.WhereClause("\"", "\"", 2, allocationPrimaryKeyColumns),
 			)
 			values := []interface{}{o.ID, rel.ID}
@@ -878,25 +878,25 @@ func (o *User) AddAdminAllocations(ctx context.Context, exec boil.ContextExecuto
 				return errors.Wrap(err, "failed to update foreign table")
 			}
 
-			rel.AdminID = o.ID
+			rel.AllocatorID = o.ID
 		}
 	}
 
 	if o.R == nil {
 		o.R = &userR{
-			AdminAllocations: related,
+			AllocatorAllocations: related,
 		}
 	} else {
-		o.R.AdminAllocations = append(o.R.AdminAllocations, related...)
+		o.R.AllocatorAllocations = append(o.R.AllocatorAllocations, related...)
 	}
 
 	for _, rel := range related {
 		if rel.R == nil {
 			rel.R = &allocationR{
-				Admin: o,
+				Allocator: o,
 			}
 		} else {
-			rel.R.Admin = o
+			rel.R.Allocator = o
 		}
 	}
 	return nil

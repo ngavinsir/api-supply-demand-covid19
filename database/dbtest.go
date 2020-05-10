@@ -17,7 +17,7 @@ func InitTestDB() (*sql.DB, error) {
 		conn = envConn
 	}
 
-	return connect(conn)
+	return connect(conn, "file://../migrations")
 }
 
 // ResetTestDB clears test db data.
@@ -36,8 +36,8 @@ func ResetTestDB(db *sql.DB) error {
 	models.Items().DeleteAll(context.Background(), tx)
 	models.Units().DeleteAll(context.Background(), tx)
 	models.Requests().DeleteAll(context.Background(), tx)
-	models.Users().DeleteAll(context.Background(), tx)
 	models.PasswordResetRequests().DeleteAll(context.Background(), tx)
+	models.Users().DeleteAll(context.Background(), tx)
 
 	err = tx.Commit()
 	return err

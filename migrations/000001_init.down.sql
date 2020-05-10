@@ -1,0 +1,13 @@
+BEGIN;
+DROP TABLE IF EXISTS allocation_items;
+DROP TABLE IF EXISTS allocations;
+DROP TABLE IF EXISTS donation_items;
+DROP TABLE IF EXISTS stocks;
+DROP TABLE IF EXISTS request_items;
+DROP TABLE IF EXISTS donations;
+DROP TABLE IF EXISTS items;
+DROP TABLE IF EXISTS units;
+DROP TABLE IF EXISTS requests;
+DROP TABLE IF EXISTS password_rest_requests;
+DROP TABLE IF EXISTS users CASCADE;
+COMMIT;
