@@ -494,7 +494,7 @@ func testUsersInsertWhitelist(t *testing.T) {
 	}
 }
 
-func testUserToManyAllocatorAllocations(t *testing.T) {
+func testUserToManyAdminAllocations(t *testing.T) {
 	var err error
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
@@ -519,8 +519,8 @@ func testUserToManyAllocatorAllocations(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	b.AllocatorID = a.ID
-	c.AllocatorID = a.ID
+	b.AdminID = a.ID
+	c.AdminID = a.ID
 
 	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
@@ -529,17 +529,17 @@ func testUserToManyAllocatorAllocations(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	check, err := a.AllocatorAllocations().All(ctx, tx)
+	check, err := a.AdminAllocations().All(ctx, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	bFound, cFound := false, false
 	for _, v := range check {
-		if v.AllocatorID == b.AllocatorID {
+		if v.AdminID == b.AdminID {
 			bFound = true
 		}
-		if v.AllocatorID == c.AllocatorID {
+		if v.AdminID == c.AdminID {
 			cFound = true
 		}
 	}
@@ -552,18 +552,18 @@ func testUserToManyAllocatorAllocations(t *testing.T) {
 	}
 
 	slice := UserSlice{&a}
-	if err = a.L.LoadAllocatorAllocations(ctx, tx, false, (*[]*User)(&slice), nil); err != nil {
+	if err = a.L.LoadAdminAllocations(ctx, tx, false, (*[]*User)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
-	if got := len(a.R.AllocatorAllocations); got != 2 {
+	if got := len(a.R.AdminAllocations); got != 2 {
 		t.Error("number of eager loaded records wrong, got:", got)
 	}
 
-	a.R.AllocatorAllocations = nil
-	if err = a.L.LoadAllocatorAllocations(ctx, tx, true, &a, nil); err != nil {
+	a.R.AdminAllocations = nil
+	if err = a.L.LoadAdminAllocations(ctx, tx, true, &a, nil); err != nil {
 		t.Fatal(err)
 	}
-	if got := len(a.R.AllocatorAllocations); got != 2 {
+	if got := len(a.R.AdminAllocations); got != 2 {
 		t.Error("number of eager loaded records wrong, got:", got)
 	}
 
@@ -806,7 +806,7 @@ func testUserToManyDonationApplicantRequests(t *testing.T) {
 	}
 }
 
-func testUserToManyAddOpAllocatorAllocations(t *testing.T) {
+func testUserToManyAddOpAdminAllocations(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
@@ -843,7 +843,7 @@ func testUserToManyAddOpAllocatorAllocations(t *testing.T) {
 	}
 
 	for i, x := range foreignersSplitByInsertion {
-		err = a.AddAllocatorAllocations(ctx, tx, i != 0, x...)
+		err = a.AddAdminAllocations(ctx, tx, i != 0, x...)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -851,28 +851,28 @@ func testUserToManyAddOpAllocatorAllocations(t *testing.T) {
 		first := x[0]
 		second := x[1]
 
-		if a.ID != first.AllocatorID {
-			t.Error("foreign key was wrong value", a.ID, first.AllocatorID)
+		if a.ID != first.AdminID {
+			t.Error("foreign key was wrong value", a.ID, first.AdminID)
 		}
-		if a.ID != second.AllocatorID {
-			t.Error("foreign key was wrong value", a.ID, second.AllocatorID)
+		if a.ID != second.AdminID {
+			t.Error("foreign key was wrong value", a.ID, second.AdminID)
 		}
 
-		if first.R.Allocator != &a {
+		if first.R.Admin != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
-		if second.R.Allocator != &a {
+		if second.R.Admin != &a {
 			t.Error("relationship was not added properly to the foreign slice")
 		}
 
-		if a.R.AllocatorAllocations[i*2] != first {
+		if a.R.AdminAllocations[i*2] != first {
 			t.Error("relationship struct slice not set to correct value")
 		}
-		if a.R.AllocatorAllocations[i*2+1] != second {
+		if a.R.AdminAllocations[i*2+1] != second {
 			t.Error("relationship struct slice not set to correct value")
 		}
 
-		count, err := a.AllocatorAllocations().Count(ctx, tx)
+		count, err := a.AdminAllocations().Count(ctx, tx)
 		if err != nil {
 			t.Fatal(err)
 		}

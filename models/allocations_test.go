@@ -698,7 +698,7 @@ func testAllocationToOneRequestUsingRequest(t *testing.T) {
 	}
 }
 
-func testAllocationToOneUserUsingAllocator(t *testing.T) {
+func testAllocationToOneUserUsingAdmin(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))
 	defer func() { _ = tx.Rollback() }()
@@ -718,12 +718,12 @@ func testAllocationToOneUserUsingAllocator(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	local.AllocatorID = foreign.ID
+	local.AdminID = foreign.ID
 	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
 		t.Fatal(err)
 	}
 
-	check, err := local.Allocator().One(ctx, tx)
+	check, err := local.Admin().One(ctx, tx)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -733,18 +733,18 @@ func testAllocationToOneUserUsingAllocator(t *testing.T) {
 	}
 
 	slice := AllocationSlice{&local}
-	if err = local.L.LoadAllocator(ctx, tx, false, (*[]*Allocation)(&slice), nil); err != nil {
+	if err = local.L.LoadAdmin(ctx, tx, false, (*[]*Allocation)(&slice), nil); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.Allocator == nil {
+	if local.R.Admin == nil {
 		t.Error("struct should have been eager loaded")
 	}
 
-	local.R.Allocator = nil
-	if err = local.L.LoadAllocator(ctx, tx, true, &local, nil); err != nil {
+	local.R.Admin = nil
+	if err = local.L.LoadAdmin(ctx, tx, true, &local, nil); err != nil {
 		t.Fatal(err)
 	}
-	if local.R.Allocator == nil {
+	if local.R.Admin == nil {
 		t.Error("struct should have been eager loaded")
 	}
 }
@@ -806,7 +806,7 @@ func testAllocationToOneSetOpRequestUsingRequest(t *testing.T) {
 		}
 	}
 }
-func testAllocationToOneSetOpUserUsingAllocator(t *testing.T) {
+func testAllocationToOneSetOpUserUsingAdmin(t *testing.T) {
 	var err error
 
 	ctx := context.Background()
@@ -835,31 +835,31 @@ func testAllocationToOneSetOpUserUsingAllocator(t *testing.T) {
 	}
 
 	for i, x := range []*User{&b, &c} {
-		err = a.SetAllocator(ctx, tx, i != 0, x)
+		err = a.SetAdmin(ctx, tx, i != 0, x)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if a.R.Allocator != x {
+		if a.R.Admin != x {
 			t.Error("relationship struct not set to correct value")
 		}
 
-		if x.R.AllocatorAllocations[0] != &a {
+		if x.R.AdminAllocations[0] != &a {
 			t.Error("failed to append to foreign relationship struct")
 		}
-		if a.AllocatorID != x.ID {
-			t.Error("foreign key was wrong value", a.AllocatorID)
+		if a.AdminID != x.ID {
+			t.Error("foreign key was wrong value", a.AdminID)
 		}
 
-		zero := reflect.Zero(reflect.TypeOf(a.AllocatorID))
-		reflect.Indirect(reflect.ValueOf(&a.AllocatorID)).Set(zero)
+		zero := reflect.Zero(reflect.TypeOf(a.AdminID))
+		reflect.Indirect(reflect.ValueOf(&a.AdminID)).Set(zero)
 
 		if err = a.Reload(ctx, tx); err != nil {
 			t.Fatal("failed to reload", err)
 		}
 
-		if a.AllocatorID != x.ID {
-			t.Error("foreign key was wrong value", a.AllocatorID, x.ID)
+		if a.AdminID != x.ID {
+			t.Error("foreign key was wrong value", a.AdminID, x.ID)
 		}
 	}
 }
@@ -938,7 +938,7 @@ func testAllocationsSelect(t *testing.T) {
 }
 
 var (
-	allocationDBTypes = map[string]string{`ID`: `text`, `RequestID`: `text`, `Date`: `timestamp with time zone`, `PhotoURL`: `text`, `AllocatorID`: `text`}
+	allocationDBTypes = map[string]string{`ID`: `text`, `RequestID`: `text`, `Date`: `timestamp with time zone`, `PhotoURL`: `text`, `AdminID`: `text`}
 	_                 = bytes.MinRead
 )
 

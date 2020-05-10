@@ -39,7 +39,7 @@ func CreateAllocation(
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, _ := r.Context().Value(UserCtxKey).(*models.User)
-		if user.Role != model.RoleAdmin && user.Role != model.RoleDonator {
+		if user.Role != model.RoleAdmin {
 			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
 			return
 		}
@@ -53,7 +53,7 @@ func CreateAllocation(
 		allocation, err := allocationRepo.CreateAllocation(
 			r.Context(),
 			&models.Allocation{
-				AllocatorID:   user.ID,
+				AdminID:   user.ID,
 				PhotoURL:  null.StringFrom(data.PhotoURL),
 				RequestID: data.RequestID,
 				Date: data.Date,
