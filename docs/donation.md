@@ -26,23 +26,19 @@
 * Response Body:
     ```
     {
-        "id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
-        "date": "2020-03-29T01:04:03.458704516+07:00",
-        "isAccepted": false,
-        "isDonated": false,
-        "donationItems": [
+        "donation": {
+            "id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
+            "date": "2020-03-29T01:04:03.458704516+07:00",
+            "is_accepted": false,
+            "is_donated": false,
+            "donator_id": "1ZiESUvzPPP0r9SCTtkt84eAGfP"
+        },
+        "items": [
             {
                 "id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
-                "donation_id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
+                "donation_id": "1ZlfXsUn4fYgvWc7Ke6SZSNuDPn",
                 "item_id": "1",
                 "unit_id": "1",
-                "quantity": "10"
-            },
-            {
-                "id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HL",
-                "donation_id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
-                "item_id": "2",
-                "unit_id": "2",
                 "quantity": "10"
             },
         ]

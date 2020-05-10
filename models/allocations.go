@@ -24,28 +24,28 @@ import (
 
 // Allocation is an object representing the database table.
 type Allocation struct {
-	ID          string      `boil:"id" json:"id" toml:"id" yaml:"id"`
-	RequestID   string      `boil:"request_id" json:"request_id" toml:"request_id" yaml:"request_id"`
-	Date        time.Time   `boil:"date" json:"date" toml:"date" yaml:"date"`
-	PhotoURL    null.String `boil:"photo_url" json:"photo_url,omitempty" toml:"photo_url" yaml:"photo_url,omitempty"`
-	AllocatorID string      `boil:"allocator_id" json:"allocator_id" toml:"allocator_id" yaml:"allocator_id"`
+	ID        string      `boil:"id" json:"id" toml:"id" yaml:"id"`
+	RequestID string      `boil:"request_id" json:"request_id" toml:"request_id" yaml:"request_id"`
+	Date      time.Time   `boil:"date" json:"date" toml:"date" yaml:"date"`
+	PhotoURL  null.String `boil:"photo_url" json:"photo_url,omitempty" toml:"photo_url" yaml:"photo_url,omitempty"`
+	AdminID   string      `boil:"admin_id" json:"admin_id" toml:"admin_id" yaml:"admin_id"`
 
 	R *allocationR `boil:"-" json:"-" toml:"-" yaml:"-"`
 	L allocationL  `boil:"-" json:"-" toml:"-" yaml:"-"`
 }
 
 var AllocationColumns = struct {
-	ID          string
-	RequestID   string
-	Date        string
-	PhotoURL    string
-	AllocatorID string
+	ID        string
+	RequestID string
+	Date      string
+	PhotoURL  string
+	AdminID   string
 }{
-	ID:          "id",
-	RequestID:   "request_id",
-	Date:        "date",
-	PhotoURL:    "photo_url",
-	AllocatorID: "allocator_id",
+	ID:        "id",
+	RequestID: "request_id",
+	Date:      "date",
+	PhotoURL:  "photo_url",
+	AdminID:   "admin_id",
 }
 
 // Generated where
@@ -95,34 +95,34 @@ func (w whereHelpernull_String) GTE(x null.String) qm.QueryMod {
 }
 
 var AllocationWhere = struct {
-	ID          whereHelperstring
-	RequestID   whereHelperstring
-	Date        whereHelpertime_Time
-	PhotoURL    whereHelpernull_String
-	AllocatorID whereHelperstring
+	ID        whereHelperstring
+	RequestID whereHelperstring
+	Date      whereHelpertime_Time
+	PhotoURL  whereHelpernull_String
+	AdminID   whereHelperstring
 }{
-	ID:          whereHelperstring{field: "\"allocations\".\"id\""},
-	RequestID:   whereHelperstring{field: "\"allocations\".\"request_id\""},
-	Date:        whereHelpertime_Time{field: "\"allocations\".\"date\""},
-	PhotoURL:    whereHelpernull_String{field: "\"allocations\".\"photo_url\""},
-	AllocatorID: whereHelperstring{field: "\"allocations\".\"allocator_id\""},
+	ID:        whereHelperstring{field: "\"allocations\".\"id\""},
+	RequestID: whereHelperstring{field: "\"allocations\".\"request_id\""},
+	Date:      whereHelpertime_Time{field: "\"allocations\".\"date\""},
+	PhotoURL:  whereHelpernull_String{field: "\"allocations\".\"photo_url\""},
+	AdminID:   whereHelperstring{field: "\"allocations\".\"admin_id\""},
 }
 
 // AllocationRels is where relationship names are stored.
 var AllocationRels = struct {
 	Request         string
-	Allocator       string
+	Admin           string
 	AllocationItems string
 }{
 	Request:         "Request",
-	Allocator:       "Allocator",
+	Admin:           "Admin",
 	AllocationItems: "AllocationItems",
 }
 
 // allocationR is where relationships are stored.
 type allocationR struct {
 	Request         *Request
-	Allocator       *User
+	Admin           *User
 	AllocationItems AllocationItemSlice
 }
 
@@ -135,8 +135,8 @@ func (*allocationR) NewStruct() *allocationR {
 type allocationL struct{}
 
 var (
-	allocationAllColumns            = []string{"id", "request_id", "date", "photo_url", "allocator_id"}
-	allocationColumnsWithoutDefault = []string{"id", "request_id", "date", "photo_url", "allocator_id"}
+	allocationAllColumns            = []string{"id", "request_id", "date", "photo_url", "admin_id"}
+	allocationColumnsWithoutDefault = []string{"id", "request_id", "date", "photo_url", "admin_id"}
 	allocationColumnsWithDefault    = []string{}
 	allocationPrimaryKeyColumns     = []string{"id"}
 )
@@ -430,10 +430,10 @@ func (o *Allocation) Request(mods ...qm.QueryMod) requestQuery {
 	return query
 }
 
-// Allocator pointed to by the foreign key.
-func (o *Allocation) Allocator(mods ...qm.QueryMod) userQuery {
+// Admin pointed to by the foreign key.
+func (o *Allocation) Admin(mods ...qm.QueryMod) userQuery {
 	queryMods := []qm.QueryMod{
-		qm.Where("\"id\" = ?", o.AllocatorID),
+		qm.Where("\"id\" = ?", o.AdminID),
 	}
 
 	queryMods = append(queryMods, mods...)
@@ -566,9 +566,9 @@ func (allocationL) LoadRequest(ctx context.Context, e boil.ContextExecutor, sing
 	return nil
 }
 
-// LoadAllocator allows an eager lookup of values, cached into the
+// LoadAdmin allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
-func (allocationL) LoadAllocator(ctx context.Context, e boil.ContextExecutor, singular bool, maybeAllocation interface{}, mods queries.Applicator) error {
+func (allocationL) LoadAdmin(ctx context.Context, e boil.ContextExecutor, singular bool, maybeAllocation interface{}, mods queries.Applicator) error {
 	var slice []*Allocation
 	var object *Allocation
 
@@ -583,7 +583,7 @@ func (allocationL) LoadAllocator(ctx context.Context, e boil.ContextExecutor, si
 		if object.R == nil {
 			object.R = &allocationR{}
 		}
-		args = append(args, object.AllocatorID)
+		args = append(args, object.AdminID)
 
 	} else {
 	Outer:
@@ -593,12 +593,12 @@ func (allocationL) LoadAllocator(ctx context.Context, e boil.ContextExecutor, si
 			}
 
 			for _, a := range args {
-				if a == obj.AllocatorID {
+				if a == obj.AdminID {
 					continue Outer
 				}
 			}
 
-			args = append(args, obj.AllocatorID)
+			args = append(args, obj.AdminID)
 
 		}
 	}
@@ -643,22 +643,22 @@ func (allocationL) LoadAllocator(ctx context.Context, e boil.ContextExecutor, si
 
 	if singular {
 		foreign := resultSlice[0]
-		object.R.Allocator = foreign
+		object.R.Admin = foreign
 		if foreign.R == nil {
 			foreign.R = &userR{}
 		}
-		foreign.R.AllocatorAllocations = append(foreign.R.AllocatorAllocations, object)
+		foreign.R.AdminAllocations = append(foreign.R.AdminAllocations, object)
 		return nil
 	}
 
 	for _, local := range slice {
 		for _, foreign := range resultSlice {
-			if local.AllocatorID == foreign.ID {
-				local.R.Allocator = foreign
+			if local.AdminID == foreign.ID {
+				local.R.Admin = foreign
 				if foreign.R == nil {
 					foreign.R = &userR{}
 				}
-				foreign.R.AllocatorAllocations = append(foreign.R.AllocatorAllocations, local)
+				foreign.R.AdminAllocations = append(foreign.R.AdminAllocations, local)
 				break
 			}
 		}
@@ -809,10 +809,10 @@ func (o *Allocation) SetRequest(ctx context.Context, exec boil.ContextExecutor, 
 	return nil
 }
 
-// SetAllocator of the allocation to the related item.
-// Sets o.R.Allocator to related.
-// Adds o to related.R.AllocatorAllocations.
-func (o *Allocation) SetAllocator(ctx context.Context, exec boil.ContextExecutor, insert bool, related *User) error {
+// SetAdmin of the allocation to the related item.
+// Sets o.R.Admin to related.
+// Adds o to related.R.AdminAllocations.
+func (o *Allocation) SetAdmin(ctx context.Context, exec boil.ContextExecutor, insert bool, related *User) error {
 	var err error
 	if insert {
 		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
@@ -822,7 +822,7 @@ func (o *Allocation) SetAllocator(ctx context.Context, exec boil.ContextExecutor
 
 	updateQuery := fmt.Sprintf(
 		"UPDATE \"allocations\" SET %s WHERE %s",
-		strmangle.SetParamNames("\"", "\"", 1, []string{"allocator_id"}),
+		strmangle.SetParamNames("\"", "\"", 1, []string{"admin_id"}),
 		strmangle.WhereClause("\"", "\"", 2, allocationPrimaryKeyColumns),
 	)
 	values := []interface{}{related.ID, o.ID}
@@ -836,21 +836,21 @@ func (o *Allocation) SetAllocator(ctx context.Context, exec boil.ContextExecutor
 		return errors.Wrap(err, "failed to update local table")
 	}
 
-	o.AllocatorID = related.ID
+	o.AdminID = related.ID
 	if o.R == nil {
 		o.R = &allocationR{
-			Allocator: related,
+			Admin: related,
 		}
 	} else {
-		o.R.Allocator = related
+		o.R.Admin = related
 	}
 
 	if related.R == nil {
 		related.R = &userR{
-			AllocatorAllocations: AllocationSlice{o},
+			AdminAllocations: AllocationSlice{o},
 		}
 	} else {
-		related.R.AllocatorAllocations = append(related.R.AllocatorAllocations, o)
+		related.R.AdminAllocations = append(related.R.AdminAllocations, o)
 	}
 
 	return nil
