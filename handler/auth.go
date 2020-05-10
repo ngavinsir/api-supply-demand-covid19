@@ -51,7 +51,7 @@ func (res *AuthResource) router() *chi.Mux {
 	r.Post("/register", Register(res))
 	r.Post("/reset", ResetPassword(res))
 	r.Put("/reset/{requestID}/confirm", ConfirmPasswordReset(res))
-	
+
 	r.With(AuthMiddleware).Post("/refresh", RefreshToken)
 
 	return r
@@ -196,7 +196,9 @@ func RefreshToken(w http.ResponseWriter, r *http.Request) {
 }
 
 // ResetPassword creates new password reset request.
-func ResetPassword(repo interface{ model.HasCreatePasswordResetRequest }) http.HandlerFunc {
+func ResetPassword(repo interface {
+	model.HasCreatePasswordResetRequest
+}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		data := &ResetPasswordRequest{}
 		if err := render.Bind(r, data); err != nil {
@@ -218,7 +220,9 @@ func ResetPassword(repo interface{ model.HasCreatePasswordResetRequest }) http.H
 }
 
 // ConfirmPasswordReset confirms password reset request.
-func ConfirmPasswordReset(repo interface{ model.HasConfirmPasswordResetRequest }) http.HandlerFunc {
+func ConfirmPasswordReset(repo interface {
+	model.HasConfirmPasswordResetRequest
+}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		requestID := chi.URLParam(r, "requestID")
 		if requestID == "" {

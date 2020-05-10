@@ -99,8 +99,8 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore) 
 		allocationData, err := repo.CreateAllocation(
 			context.Background(),
 			&models.Allocation{
-				AllocatorID:   user.ID,
-				RequestID: request.ID,
+				AllocatorID: user.ID,
+				RequestID:   request.ID,
 			},
 			allocationItems,
 			stockRepo,
@@ -126,8 +126,8 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore) 
 		_, err = repo.CreateAllocation(
 			context.Background(),
 			&models.Allocation{
-				AllocatorID:   user.ID,
-				RequestID: request.ID,
+				AllocatorID: user.ID,
+				RequestID:   request.ID,
 			},
 			allocationItems,
 			stockRepo,

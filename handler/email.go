@@ -17,9 +17,9 @@ func SendPasswordResetConfirmationMail(userEmail string, requestID string) error
 
 	err := SendEmail(
 		"Password reset confirmation",
-		"Hi,\n\n" +
-		"Click the link below to confirm your password reset request.\n" +
-		frontendURL + requestID,
+		"Hi,\n\n"+
+			"Click the link below to confirm your password reset request.\n"+
+			frontendURL+requestID,
 		userEmail,
 	)
 
@@ -55,9 +55,9 @@ func SendEmail(subject string, body string, receiver string) error {
 		from,
 		[]string{receiver},
 		[]byte(
-			"Subject: " + subject + "\r\n" +
-			"\r\n" +
-			body,
+			"Subject: "+subject+"\r\n"+
+				"\r\n"+
+				body,
 		),
 	)
 

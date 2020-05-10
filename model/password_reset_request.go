@@ -61,8 +61,8 @@ func (db *PasswordResetRequestDatastore) CreatePasswordResetRequest(ctx context.
 	requestID := ksuid.New().String()
 
 	passwordResetRequest := &models.PasswordResetRequest{
-		ID: requestID,
-		Date: time.Now(),
+		ID:     requestID,
+		Date:   time.Now(),
 		UserID: user.ID,
 	}
 
@@ -111,7 +111,7 @@ func (db *PasswordResetRequestDatastore) ConfirmPasswordResetRequest(ctx context
 		tx.Rollback()
 		return err
 	}
-	
+
 	if _, err = request.Delete(ctx, tx); err != nil {
 		tx.Rollback()
 		return err
