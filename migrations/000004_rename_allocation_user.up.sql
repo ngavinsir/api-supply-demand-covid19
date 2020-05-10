@@ -1,1 +1,0 @@
-alter table allocations rename column admin_id to allocator_id;
