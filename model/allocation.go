@@ -130,7 +130,7 @@ func (db *AllocationDatastore) CreateAllocation(
 	allocationData := &AllocationData{
 		ID:              allocation.ID,
 		Date:            allocation.Date,
-		AdminID:         allocation.AdminID,
+		AdminID:         allocation.AllocatorID,
 		PhotoURL:        allocation.PhotoURL.String,
 		RequestID:       allocation.RequestID,
 		AllocationItems: items,
