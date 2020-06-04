@@ -29,7 +29,7 @@ func TestAllocation(t *testing.T) {
 		db.Close()
 	}()
 	database.ResetTestDB(db)
-	
+
 	t.Run("Create", testCreateAllocation(&AllocationDatastore{DB: db}, &StockDataStore{DB: db}, &RequestDatastore{DB: db}))
 }
 
@@ -42,7 +42,7 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore, 
 		if err := unit.Insert(context.Background(), repo.DB, boil.Infer()); err != nil {
 			panic(err)
 		}
-		
+
 		item := &models.Item{
 			ID:   testItemID,
 			Name: testItemName,
@@ -99,8 +99,8 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore, 
 		allocationData, err := repo.CreateAllocation(
 			context.Background(),
 			&models.Allocation{
-				AllocatorID:   user.ID,
-				RequestID: request.ID,
+				AllocatorID: user.ID,
+				RequestID:   request.ID,
 			},
 			allocationItems,
 			stockRepo,
@@ -109,7 +109,7 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore, 
 		if err != nil {
 			t.Error(err)
 		}
-		
+
 		if allocationData.ID == "" {
 			t.Errorf("Want allocation id assigned, got %s", allocationData.ID)
 		}
@@ -127,8 +127,8 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore, 
 		_, err = repo.CreateAllocation(
 			context.Background(),
 			&models.Allocation{
-				AllocatorID:   user.ID,
-				RequestID: request.ID,
+				AllocatorID: user.ID,
+				RequestID:   request.ID,
 			},
 			allocationItems,
 			stockRepo,

@@ -26,6 +26,7 @@ func (res *AllocationResource) router() *chi.Mux {
 	r.Use(AuthMiddleware)
 	r.Use(UserCtx(res.UserDatastore))
 	r.Post("/", CreateAllocation(res))
+	r.With(PaginationCtx).Get("/", GetAllAllocations(res))
 
 	return r
 }
@@ -55,10 +56,10 @@ func CreateAllocation(
 		allocation, err := repo.CreateAllocation(
 			r.Context(),
 			&models.Allocation{
-				AllocatorID:   user.ID,
-				PhotoURL:  null.StringFrom(data.PhotoURL),
-				RequestID: data.RequestID,
-				Date: data.Date,
+				AllocatorID: user.ID,
+				PhotoURL:    null.StringFrom(data.PhotoURL),
+				RequestID:   data.RequestID,
+				Date:        data.Date,
 			},
 			data.AllocationItems,
 			repo,
@@ -73,10 +74,43 @@ func CreateAllocation(
 	}
 }
 
+// GetAllAllocations gets all allocations.
+func GetAllAllocations(
+	repo interface {
+		model.HasGetAllAllocations
+		model.HasGetTotalAllocationCount
+		model.HasGetRequest
+	},
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
+		paging, _ := r.Context().Value(PageCtxKey).(*Paging)
+
+		allocationData, err := repo.GetAllAllocations(r.Context(), paging.Offset(), paging.Size, repo)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+		totalAllocationCount, err := repo.GetTotalAllocationCount(r.Context())
+
+		allocationDataPage := &AllocationDataPage{
+			Data:  allocationData,
+			Pages: paging.Pages(totalAllocationCount),
+		}
+
+		render.JSON(w, r, allocationDataPage)
+	}
+}
+
 // CreateAllocationRequest struct
 type CreateAllocationRequest struct {
 	RequestID       string                     `json:"requestID"`
-	Date			time.Time				   `json:"date"`
+	Date            time.Time                  `json:"date"`
 	PhotoURL        string                     `json:"photoURL"`
 	AllocationItems models.AllocationItemSlice `json:"items"`
 }
@@ -94,4 +128,10 @@ func (req *CreateAllocationRequest) Bind(r *http.Request) error {
 	}
 
 	return nil
+}
+
+// AllocationDataPage struct
+type AllocationDataPage struct {
+	Data  []*model.AllocationData `boil:"data" json:"data"`
+	Pages *Page                   `boil:"pages" json:"pages"`
 }

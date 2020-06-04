@@ -142,7 +142,7 @@ func (db *AllocationDatastore) CreateAllocation(
 
 	allocation.L.LoadAllocator(ctx, tx, true, allocation, nil)
 	allocation.R.Allocator.Password = ""
-	
+
 	allocationRequest, err := requestRepo.GetRequest(ctx, allocation.RequestID)
 	if err != nil {
 		tx.Rollback()
