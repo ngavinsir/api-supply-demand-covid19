@@ -60,6 +60,11 @@ type HasGetTotalUserDonationCount interface {
 	GetTotalUserDonationCount(ctx context.Context, userID string) (int64, error)
 }
 
+// HasDeleteDonation handles donation deletion.
+type HasDeleteDonation interface {
+	DeleteDonation(ctx context.Context, userID string, donationID string) error
+}
+
 // DonationDataStore holds db information.
 type DonationDataStore struct {
 	*sql.DB
@@ -439,6 +444,22 @@ func (db *DonationDataStore) GetTotalUserDonationCount(ctx context.Context, user
 	}
 
 	return totalDonationCount, nil
+}
+
+// DeleteDonation deletes a donation with donationID.
+func (db *DonationDataStore) DeleteDonation(ctx context.Context, userID string, isAdmin bool, donationID string) error {
+	donation, err := models.FindDonation(ctx, db, donationID)
+	if err != nil {
+		return errors.New("donation not found")
+	}
+
+	if donation.DonatorID != userID && !isAdmin {
+		return errors.New("donation not found")
+	}
+
+	_, err = models.Donations(models.DonationWhere.ID.EQ(donationID)).DeleteAll(ctx, db)
+
+	return err
 }
 
 // DonationData struct
