@@ -44,8 +44,8 @@ func NewAPI(db *sql.DB) *API {
 		UserDatastore:  userDatastore,
 	}
 	requestResource := &RequestResource{
-		requestDatastore: requestDatastore,
-		userDatastore:    userDatastore,
+		RequestDatastore: requestDatastore,
+		UserDatastore:    userDatastore,
 	}
 	itemResource := &ItemResource{
 		ItemDatastore: itemDatastore,
