@@ -17,6 +17,7 @@ type AllocationResource struct {
 	*model.AllocationDatastore
 	*model.StockDataStore
 	*model.UserDatastore
+	*model.RequestDatastore
 }
 
 func (res *AllocationResource) router() *chi.Mux {
@@ -24,17 +25,18 @@ func (res *AllocationResource) router() *chi.Mux {
 
 	r.Use(AuthMiddleware)
 	r.Use(UserCtx(res.UserDatastore))
-	r.Post("/", CreateAllocation(res.AllocationDatastore, res.StockDataStore))
+	r.Post("/", CreateAllocation(res))
 
 	return r
 }
 
 // CreateAllocation creates new allocation.
 func CreateAllocation(
-	allocationRepo interface{ model.HasCreateAllocation },
-	stockRepo interface {
+	repo interface {
+		model.HasCreateAllocation
 		model.HasIsStockAvailable
 		model.HasCreateOrUpdateStock
+		model.HasGetRequest
 	},
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +52,7 @@ func CreateAllocation(
 			return
 		}
 
-		allocation, err := allocationRepo.CreateAllocation(
+		allocation, err := repo.CreateAllocation(
 			r.Context(),
 			&models.Allocation{
 				AllocatorID:   user.ID,
@@ -59,7 +61,8 @@ func CreateAllocation(
 				Date: data.Date,
 			},
 			data.AllocationItems,
-			stockRepo,
+			repo,
+			repo,
 		)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))

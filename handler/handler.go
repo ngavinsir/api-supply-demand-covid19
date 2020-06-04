@@ -60,6 +60,7 @@ func NewAPI(db *sql.DB) *API {
 		AllocationDatastore: allocationDatastore,
 		StockDataStore:      stockDatastore,
 		UserDatastore:       userDatastore,
+		RequestDatastore: 	 requestDatastore,
 	}
 
 	api := &API{
