@@ -12,23 +12,24 @@ import (
 
 // RequestResource holds request data store.
 type RequestResource struct {
-	requestDatastore *model.RequestDatastore
-	userDatastore    *model.UserDatastore
+	*model.RequestDatastore
+	*model.UserDatastore
 }
 
 func (res *RequestResource) router() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.With(PaginationCtx).Get("/", GetAllRequest(res.requestDatastore))
-	r.With(PaginationCtx).Get("/user/{userID}", GetUserRequests(res.requestDatastore))
-	r.Get("/{requestID}", GetRequest(res.requestDatastore))
+	r.With(PaginationCtx).Get("/", GetAllRequest(res))
+	r.With(PaginationCtx).Get("/user/{userID}", GetUserRequests(res))
+	r.Get("/{requestID}", GetRequest(res))
 
 	r.Group(func(r chi.Router) {
 		r.Use(AuthMiddleware)
-		r.Use(UserCtx(res.userDatastore))
+		r.Use(UserCtx(res))
 
-		r.Post("/", CreateRequest(res.requestDatastore))
-		r.Put("/{requestID}", UpdateRequest(res.requestDatastore))
+		r.Post("/", CreateRequest(res))
+		r.Put("/{requestID}", UpdateRequest(res))
+		r.Delete("/{requestID}", DeleteRequest(res))
 	})
 
 	return r
@@ -156,6 +157,29 @@ func GetRequest(repo interface{ model.HasGetRequest }) http.HandlerFunc {
 		}
 
 		render.JSON(w, r, request)
+	}
+}
+
+// DeleteRequest deletes request by given request id.
+func DeleteRequest(repo interface{ model.HasDeleteRequest }) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		requestID := chi.URLParam(r, "requestID")
+		if requestID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleAdmin && user.Role != model.RoleApplicant {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
+		err := repo.DeleteRequest(r.Context(), user.ID, user.Role == model.RoleAdmin, requestID)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
 	}
 }
 

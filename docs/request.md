@@ -259,3 +259,14 @@
         }
     }
     ```
+
+# Delete Request
+
+* Endpoint: `/api/v1/requests/{requestID}`
+* HTTP Method: `DELETE`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body: `-`
+* Response Body: `-`

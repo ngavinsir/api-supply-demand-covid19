@@ -90,11 +90,14 @@ func TestRequest(t *testing.T) {
 		panic(err)
 	}
 
-	t.Run("Create", testCreateRequest(&RequestDatastore{DB: db}, unit.ID, item.ID, user.ID))
-	t.Run("Update", testUpdateRequest(&RequestDatastore{DB: db}, unit2.ID, item2.ID, user.ID))
-	t.Run("UpdateWhenFulfilled", testUpdateRequestWhenFulfilled(&RequestDatastore{DB: db}, unit.ID, item.ID, user.ID))
-	t.Run("Get", testGetRequest(&RequestDatastore{DB: db}, unit.ID, item.ID, user))
-	t.Run("Get user", testGetUserRequests(&RequestDatastore{DB: db}, user.ID))
+	requestDatastore := &RequestDatastore{DB: db}
+
+	t.Run("Create", testCreateRequest(requestDatastore, unit.ID, item.ID, user.ID))
+	t.Run("Update", testUpdateRequest(requestDatastore, unit2.ID, item2.ID, user.ID))
+	t.Run("UpdateWhenFulfilled", testUpdateRequestWhenFulfilled(requestDatastore, unit.ID, item.ID, user.ID))
+	t.Run("Get", testGetRequest(requestDatastore, unit.ID, item.ID, user))
+	t.Run("Get user", testGetUserRequests(requestDatastore, user.ID))
+	t.Run("Delete", testDeleteRequest(requestDatastore))
 }
 
 func testCreateRequest(repo *RequestDatastore, unitID string, itemID string, userID string) func(t *testing.T) {
@@ -301,6 +304,45 @@ func testGetUserRequests(repo *RequestDatastore, userID string) func(t *testing.
 			if got, want := request.DonationApplicant.ID, userID; got != want {
 				t.Errorf("Want request donation applicant id %s, got %s", want, got)
 			}
+		}
+	}
+}
+
+func testDeleteRequest(repo *RequestDatastore) func(t *testing.T) {
+	return func(t *testing.T) {
+		requests, err := repo.GetAllRequest(context.Background(), 0, 10)
+		if err != nil {
+			t.Error(err)
+		}
+
+		request1 := requests[0]
+		err = repo.DeleteRequest(context.Background(), request1.DonationApplicant.ID, false, request1.ID)
+		if err != nil {
+			t.Error(err)
+		}
+
+		_, err = repo.GetRequest(context.Background(), request1.ID)
+		if err == nil {
+			t.Error("Want error after getting deleted request, got no error")
+		}
+
+		// test admin can delete any request
+		request2 := requests[1]
+		err = repo.DeleteRequest(context.Background(), "", true, request2.ID)
+		if err != nil {
+			t.Error(err)
+		}
+
+		_, err = repo.GetRequest(context.Background(), request2.ID)
+		if err == nil {
+			t.Error("Want error after getting deleted request, got no error")
+		}
+
+		// test can't delete another user's request
+		request3 := requests[2]
+		err = repo.DeleteRequest(context.Background(), "", false, request3.ID)
+		if err == nil {
+			t.Error("Want error after deleting another user's request, got no error")
 		}
 	}
 }

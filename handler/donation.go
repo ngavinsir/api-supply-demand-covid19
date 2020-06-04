@@ -29,8 +29,9 @@ func (res *DonationResource) router() *chi.Mux {
 		r.Use(UserCtx(res.UserDatastore))
 
 		r.Post("/", CreateOrUpdateDonation(res.DonationDataStore, model.CreateAction))
-		r.Put("/{donationID}", UpdateDonation(res.DonationDataStore))
-		r.Put("/{donationID}/accept", AcceptDonation(res.DonationDataStore, res.StockDataStore))
+		r.Put("/{donationID}", UpdateDonation(res))
+		r.Put("/{donationID}/accept", AcceptDonation(res))
+		r.Delete("/{donationID}", DeleteDonation(res))
 	})
 
 	return r
@@ -92,8 +93,10 @@ func UpdateDonation(repo interface{ model.HasUpdateDonation }) http.HandlerFunc 
 
 // AcceptDonation accepts donation by given id.
 func AcceptDonation(
-	donationRepo interface{ model.HasAcceptDonation },
-	stockRepo interface{ model.HasCreateOrUpdateStock },
+	repo interface{ 
+		model.HasAcceptDonation
+		model.HasCreateOrUpdateStock
+	},
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		donationID := chi.URLParam(r, "donationID")
@@ -102,7 +105,7 @@ func AcceptDonation(
 			return
 		}
 
-		if err := donationRepo.AcceptDonation(r.Context(), donationID, stockRepo); err != nil {
+		if err := repo.AcceptDonation(r.Context(), donationID, repo); err != nil {
 			render.Render(w, r, ErrRender(err))
 			return
 		}
@@ -183,6 +186,29 @@ func GetUserDonations(
 		}
 
 		render.JSON(w, r, donationDataPage)
+	}
+}
+
+// DeleteDonation deletes donation by given donation id.
+func DeleteDonation(repo interface{ model.HasDeleteDonation }) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		donationID := chi.URLParam(r, "donationID")
+		if donationID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleAdmin && user.Role != model.RoleDonator {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
+		err := repo.DeleteDonation(r.Context(), user.ID, user.Role == model.RoleAdmin, donationID)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
 	}
 }
 

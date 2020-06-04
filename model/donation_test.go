@@ -42,6 +42,7 @@ func TestDonation(t *testing.T) {
 	t.Run("Create", testCreateDonation(donationDatastore, &StockDataStore{DB: db}))
 	t.Run("Get", testGetDonation(donationDatastore))
 	t.Run("Get user", testGetUserDonation(donationDatastore))
+	t.Run("Delete", testDeleteDonation(donationDatastore))
 }
 
 func testCreateDonation(repo *DonationDataStore, stockRepo *StockDataStore) func(t *testing.T) {
@@ -258,6 +259,45 @@ func testGetUserDonation(repo *DonationDataStore) func(t *testing.T) {
 			if got, want := donation.Donator.ID, testDonationUserID; got != want {
 				t.Errorf("Want donator id %s, got %s", want, got)
 			}
+		}
+	}
+}
+
+func testDeleteDonation(repo *DonationDataStore) func(t *testing.T) {
+	return func(t *testing.T) {
+		donations, err := repo.GetAllDonations(context.Background(), 0, 10)
+		if err != nil {
+			t.Error(err)
+		}
+
+		donation1 := donations[0]
+		err = repo.DeleteDonation(context.Background(), donation1.Donator.ID, false, donation1.ID)
+		if err != nil {
+			t.Error(err)
+		}
+
+		_, err = repo.GetDonation(context.Background(), donation1.ID)
+		if err == nil {
+			t.Error("Want error after getting deleted donation, got no error")
+		}
+
+		// test admin can delete any donation
+		donation2 := donations[1]
+		err = repo.DeleteDonation(context.Background(), "", true, donation2.ID)
+		if err != nil {
+			t.Error(err)
+		}
+
+		_, err = repo.GetDonation(context.Background(), donation2.ID)
+		if err == nil {
+			t.Error("Want error after getting deleted donation, got no error")
+		}
+
+		// test can't delete another user's donation
+		donation3 := donations[2]
+		err = repo.DeleteDonation(context.Background(), "", false, donation3.ID)
+		if err == nil {
+			t.Error("Want error after deleting another user's donation, got no error")
 		}
 	}
 }
