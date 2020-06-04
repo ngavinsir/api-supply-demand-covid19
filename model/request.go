@@ -352,6 +352,8 @@ func (db *RequestDatastore) GetRequest(
 		requestItems = append(requestItems, requestItemData)
 	}
 
+	request.R.DonationApplicant.Password = ""
+
 	requestData := &RequestData{
 		ID:                request.ID,
 		Date:              request.Date,
