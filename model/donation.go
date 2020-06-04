@@ -62,7 +62,7 @@ type HasGetTotalUserDonationCount interface {
 
 // HasDeleteDonation handles donation deletion.
 type HasDeleteDonation interface {
-	DeleteDonation(ctx context.Context, userID string, donationID string) error
+	DeleteDonation(ctx context.Context, userID string, isAdmin bool, donationID string) error
 }
 
 // DonationDataStore holds db information.
