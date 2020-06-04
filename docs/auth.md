@@ -6,14 +6,14 @@
     * Accept: `application/json`
     * Content-type: `application/json`
 * Request Body:
-    ```
+    ```JSON
     {
         "email": "test",
         "password": "test"
     }
     ```
 * Response Body:
-    ```
+    ```JSON
     {
         "user": {
             "id": "1ZiESUvzPPP0r9SCTtkt84eAGfP",
@@ -36,7 +36,7 @@
     * Accept: `application/json`
     * Content-type: `application/json`
 * Request Body:
-    ```
+    ```JSON
     {
         "email": "test",
         "password": "test",
@@ -47,7 +47,7 @@
     }
     ```
 * Response Body:
-    ```
+    ```JSON
     {
         "email": "test",
         "name": "test",
@@ -82,7 +82,7 @@
     * Accept: `application/json`
     * Content-type: `application/json`
 * Request Body:
-    ```
+    ```JSON
     {
         "email": "example@email.com"
     }
@@ -96,7 +96,7 @@
     * Accept: `application/json`
     * Content-type: `application/json`
 * Request Body:
-    ```
+    ```JSON
     {
         "newPassword": "NEW_PASSWORD"
     }

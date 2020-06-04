@@ -49,6 +49,11 @@ type HasUpdateRequest interface {
 	UpdateRequest(ctx context.Context, requestItems []*models.RequestItem, requestID string) (*RequestData, error)
 }
 
+// HasDeleteRequest handles request deletion.
+type HasDeleteRequest interface {
+	DeleteRequest(ctx context.Context, userID string, isAdmin bool, requestID string) error
+}
+
 // RequestDatastore holds db information.
 type RequestDatastore struct {
 	*sql.DB
@@ -352,6 +357,8 @@ func (db *RequestDatastore) GetRequest(
 		requestItems = append(requestItems, requestItemData)
 	}
 
+	request.R.DonationApplicant.Password = ""
+
 	requestData := &RequestData{
 		ID:                request.ID,
 		Date:              request.Date,
@@ -361,6 +368,26 @@ func (db *RequestDatastore) GetRequest(
 	}
 
 	return requestData, nil
+}
+
+// DeleteRequest deletes a request with requestID.
+func (db *RequestDatastore) DeleteRequest(ctx context.Context, userID string, isAdmin bool, requestID string) error {
+	request, err := models.FindRequest(ctx, db, requestID)
+	if err != nil {
+		return errors.New("request not found")
+	}
+
+	if request.DonationApplicantID != userID && !isAdmin {
+		return errors.New("request not found")
+	}
+
+	if request.IsFulfilled {
+		return errors.New("can't delete fulfilled request")
+	}
+
+	_, err = models.Requests(models.RequestWhere.ID.EQ(requestID)).DeleteAll(ctx, db)
+
+	return err
 }
 
 // RequestData struct

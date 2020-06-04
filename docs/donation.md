@@ -7,13 +7,13 @@
     * Content-type: `application/json`
     * Authorization: `Bearer jwt`
 * Request Body:
-    ```
+    ```JSON
     {
         "donationItems": [
             {
                 "item_id": "1",
                 "unit_id": "1",
-                "quantity: 10
+                "quantity": 10
             },
             {
                 "item_id": "2",
@@ -24,7 +24,7 @@
     }
     ```
 * Response Body:
-    ```
+    ```JSON
     {
         "id": "1ZlfXrepQpHoq6e4YYfhpdAZ4HK",
         "date": "2020-03-29T01:04:03.458704516+07:00",
@@ -58,7 +58,7 @@
     * Content-type: `application/json`
 * Request Body: `-`
 * Response Body:
-    ```
+    ```JSON
     {
         "data": [
             {
@@ -108,7 +108,7 @@
     * Content-type: `application/json`
     * Authorization: `Bearer jwt`
 * Request Body:
-    ```
+    ```JSON
     {
         "donationItems": [
             {
@@ -121,7 +121,7 @@
     }
     ```
 * Response Body:
-    ```
+    ```JSON
     {
         "id": "1aMeoehZkXbki1xJo47X6FwBtcU",
         "date": "2020-04-10T20:21:05.053957Z",
@@ -159,7 +159,7 @@
     * Content-type: `application/json`
 * Request Body: `-`
 * Response Body:
-    ```
+    ```JSON
     {
         "id": "1aMeoehZkXbki1xJo47X6FwBtcU",
         "date": "2020-04-10T20:21:05.053957Z",
@@ -199,7 +199,7 @@
     * Content-type: `application/json`
 * Request Body: `-`
 * Response Body:
-    ```
+    ```JSON
     {
         "data": [
             {
@@ -239,3 +239,14 @@
         }
     }
     ```
+
+# Delete Donation
+
+* Endpoint: `/api/v1/donations/{donationID}`
+* HTTP Method: `DELETE`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body: `-`
+* Response Body: `-`

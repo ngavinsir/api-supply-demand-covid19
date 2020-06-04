@@ -10,6 +10,7 @@ import (
 	"github.com/ngavinsir/api-supply-demand-covid19/models"
 	"github.com/segmentio/ksuid"
 	"github.com/volatiletech/sqlboiler/boil"
+	. "github.com/volatiletech/sqlboiler/queries/qm"
 	"github.com/volatiletech/sqlboiler/types"
 )
 
@@ -23,7 +24,18 @@ type HasCreateAllocation interface {
 			HasIsStockAvailable
 			HasCreateOrUpdateStock
 		},
+		requestRepo interface{ HasGetRequest },
 	) (*AllocationData, error)
+}
+
+// HasGetAllAllocations handles allocations retrieval.
+type HasGetAllAllocations interface {
+	GetAllAllocations(ctx context.Context, offset int, limit int, requestRepo interface{ HasGetRequest }) ([]*AllocationData, error)
+}
+
+// HasGetTotalAllocationCount handles allocations count retrieval.
+type HasGetTotalAllocationCount interface {
+	GetTotalAllocationCount(ctx context.Context) (int64, error)
 }
 
 // AllocationDatastore holds db information.
@@ -40,6 +52,7 @@ func (db *AllocationDatastore) CreateAllocation(
 		HasIsStockAvailable
 		HasCreateOrUpdateStock
 	},
+	requestRepo interface{ HasGetRequest },
 ) (*AllocationData, error) {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -121,18 +134,27 @@ func (db *AllocationDatastore) CreateAllocation(
 		}
 		items = append(items, &AllocationItemData{
 			ID:       result.AllocationItem.ID,
-			Item:     result.AllocationItem.R.Item.Name,
-			Unit:     result.AllocationItem.R.Unit.Name,
+			Item:     result.AllocationItem.R.Item,
+			Unit:     result.AllocationItem.R.Unit,
 			Quantity: result.AllocationItem.Quantity,
 		})
+	}
+
+	allocation.L.LoadAllocator(ctx, tx, true, allocation, nil)
+	allocation.R.Allocator.Password = ""
+
+	allocationRequest, err := requestRepo.GetRequest(ctx, allocation.RequestID)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
 	}
 
 	allocationData := &AllocationData{
 		ID:              allocation.ID,
 		Date:            allocation.Date,
-		AllocatorID:     allocation.AllocatorID,
+		Allocator:       allocation.R.Allocator,
 		PhotoURL:        allocation.PhotoURL.String,
-		RequestID:       allocation.RequestID,
+		Request:         allocationRequest,
 		AllocationItems: items,
 	}
 
@@ -144,12 +166,72 @@ func (db *AllocationDatastore) CreateAllocation(
 	return allocationData, nil
 }
 
+// GetAllAllocations gets all allocations.
+func (db *AllocationDatastore) GetAllAllocations(
+	ctx context.Context,
+	offset int,
+	limit int,
+	requestRepo interface{ HasGetRequest },
+) ([]*AllocationData, error) {
+	allocations, err := models.Allocations(
+		Load("AllocationItems.Item"),
+		Load("AllocationItems.Unit"),
+		Load(models.AllocationRels.Allocator),
+		Offset(offset),
+		Limit(limit),
+	).All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+
+	var allocationData []*AllocationData
+	for _, allocation := range allocations {
+		allocation.R.Allocator.Password = ""
+
+		var allocationItems []*AllocationItemData
+		for _, item := range allocation.R.AllocationItems {
+			allocationItems = append(allocationItems, &AllocationItemData{
+				ID:       item.ID,
+				Item:     item.R.Item,
+				Unit:     item.R.Unit,
+				Quantity: item.Quantity,
+			})
+		}
+
+		allocationRequest, err := requestRepo.GetRequest(ctx, allocation.RequestID)
+		if err != nil {
+			return nil, err
+		}
+
+		allocationData = append(allocationData, &AllocationData{
+			ID:              allocation.ID,
+			Date:            allocation.Date,
+			AllocationItems: allocationItems,
+			Allocator:       allocation.R.Allocator,
+			PhotoURL:        allocation.PhotoURL.String,
+			Request:         allocationRequest,
+		})
+	}
+
+	return allocationData, nil
+}
+
+// GetTotalAllocationCount returns total allocation count.
+func (db *AllocationDatastore) GetTotalAllocationCount(ctx context.Context) (int64, error) {
+	totalAllocationCount, err := models.Allocations().Count(ctx, db)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalAllocationCount, nil
+}
+
 // AllocationData struct
 type AllocationData struct {
 	ID              string                `json:"id"`
 	Date            time.Time             `json:"date"`
-	RequestID       string                `json:"requestID"`
-	AllocatorID     string                `json:"allocatorID"`
+	Request         *RequestData          `json:"request"`
+	Allocator       *models.User          `json:"allocator,omitempty"`
 	PhotoURL        string                `json:"photoUrl"`
 	AllocationItems []*AllocationItemData `json:"items"`
 }
@@ -157,8 +239,8 @@ type AllocationData struct {
 // AllocationItemData struct
 type AllocationItemData struct {
 	ID           string        `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Item         string        `boil:"item" json:"item" toml:"item" yaml:"item"`
-	Unit         string        `boil:"unit" json:"unit" toml:"unit" yaml:"unit"`
+	Item         *models.Item  `boil:"item" json:"item" toml:"item" yaml:"item"`
+	Unit         *models.Unit  `boil:"unit" json:"unit" toml:"unit" yaml:"unit"`
 	Quantity     types.Decimal `boil:"quantity" json:"quantity"`
 	AllocationID string        `boil:"allocation_id" json:"allocation_id,omitempty"`
 }

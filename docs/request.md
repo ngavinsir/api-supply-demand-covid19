@@ -7,7 +7,7 @@
     * Content-type: `application/json`
     * Authorization: `Bearer token`
 * Request Body:
-    ```
+    ```JSON
     {
         "requestItems": [
             {
@@ -24,7 +24,7 @@
     }
     ```
 * Response Body:
-    ```
+    ```JSON
     {
         "id": "1Zw60g0nM99QJIJjN37SpIKlYF9",
         "date": "2020-04-01T17:39:47.940516264+07:00",
@@ -61,7 +61,7 @@
     * Content-type: `application/json`
 * Request Body: `-`
 * Response Body:
-    ```
+    ```JSON
     {
         "data": [
             {
@@ -122,7 +122,7 @@
     * Content-type: `application/json`
     * Authorization: `Bearer token`
 * Request Body:
-    ```
+    ```JSON
     {
         "requestItems": [
             {
@@ -135,7 +135,7 @@
     }
     ```
 * Response Body:
-    ```
+    ```JSON
     {
         "id": "1aMhktyXsy1gTLZOAtc2ObhOwnI",
         "date": "2020-04-10T20:45:16.952605Z",
@@ -167,7 +167,7 @@
     * Content-type: `application/json`
 * Request Body: `-`
 * Response Body:
-    ```
+    ```JSON
     {
         "data": {
             "id": "1Zw6eIqGb6CXoxw3WL2JofbBjcA",
@@ -220,7 +220,7 @@
     * Content-type: `application/json`
 * Request Body: `-`
 * Response Body:
-    ```
+    ```JSON
     {
         "data": [
             {
@@ -259,3 +259,14 @@
         }
     }
     ```
+
+# Delete Request
+
+* Endpoint: `/api/v1/requests/{requestID}`
+* HTTP Method: `DELETE`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body: `-`
+* Response Body: `-`

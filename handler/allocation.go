@@ -17,6 +17,7 @@ type AllocationResource struct {
 	*model.AllocationDatastore
 	*model.StockDataStore
 	*model.UserDatastore
+	*model.RequestDatastore
 }
 
 func (res *AllocationResource) router() *chi.Mux {
@@ -24,17 +25,19 @@ func (res *AllocationResource) router() *chi.Mux {
 
 	r.Use(AuthMiddleware)
 	r.Use(UserCtx(res.UserDatastore))
-	r.Post("/", CreateAllocation(res.AllocationDatastore, res.StockDataStore))
+	r.Post("/", CreateAllocation(res))
+	r.With(PaginationCtx).Get("/", GetAllAllocations(res))
 
 	return r
 }
 
 // CreateAllocation creates new allocation.
 func CreateAllocation(
-	allocationRepo interface{ model.HasCreateAllocation },
-	stockRepo interface {
+	repo interface {
+		model.HasCreateAllocation
 		model.HasIsStockAvailable
 		model.HasCreateOrUpdateStock
+		model.HasGetRequest
 	},
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +53,7 @@ func CreateAllocation(
 			return
 		}
 
-		allocation, err := allocationRepo.CreateAllocation(
+		allocation, err := repo.CreateAllocation(
 			r.Context(),
 			&models.Allocation{
 				AllocatorID: user.ID,
@@ -59,7 +62,8 @@ func CreateAllocation(
 				Date:        data.Date,
 			},
 			data.AllocationItems,
-			stockRepo,
+			repo,
+			repo,
 		)
 		if err != nil {
 			render.Render(w, r, ErrRender(err))
@@ -67,6 +71,39 @@ func CreateAllocation(
 		}
 
 		render.JSON(w, r, allocation)
+	}
+}
+
+// GetAllAllocations gets all allocations.
+func GetAllAllocations(
+	repo interface {
+		model.HasGetAllAllocations
+		model.HasGetTotalAllocationCount
+		model.HasGetRequest
+	},
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
+		paging, _ := r.Context().Value(PageCtxKey).(*Paging)
+
+		allocationData, err := repo.GetAllAllocations(r.Context(), paging.Offset(), paging.Size, repo)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+		totalAllocationCount, err := repo.GetTotalAllocationCount(r.Context())
+
+		allocationDataPage := &AllocationDataPage{
+			Data:  allocationData,
+			Pages: paging.Pages(totalAllocationCount),
+		}
+
+		render.JSON(w, r, allocationDataPage)
 	}
 }
 
@@ -91,4 +128,10 @@ func (req *CreateAllocationRequest) Bind(r *http.Request) error {
 	}
 
 	return nil
+}
+
+// AllocationDataPage struct
+type AllocationDataPage struct {
+	Data  []*model.AllocationData `boil:"data" json:"data"`
+	Pages *Page                   `boil:"pages" json:"pages"`
 }
