@@ -457,6 +457,10 @@ func (db *DonationDataStore) DeleteDonation(ctx context.Context, userID string, 
 		return errors.New("donation not found")
 	}
 
+	if donation.IsAccepted || donation.IsDonated {
+		return errors.New("can't delete accepted or donated donation")
+	}
+
 	_, err = models.Donations(models.DonationWhere.ID.EQ(donationID)).DeleteAll(ctx, db)
 
 	return err
