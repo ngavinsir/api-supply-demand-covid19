@@ -7,7 +7,7 @@
     * Content-type: `application/json`
 * Request Body: `-`
 * Response Body:
-    ```
+    ```JSON
     {
         "success": true,
         "data": [
@@ -36,14 +36,14 @@
     * Content-type: `application/json`
     * Authorization: `Bearer jwt`
 * Request Body: 
-    ```
+    ```JSON
     {
         "id": "1",
         "quantity": "5.47"
     }
     ```
 * Response Body:
-    ```
+    ```JSON
     {
         "id": "1",
         "item_id": "1",
@@ -61,7 +61,7 @@
     * Content-type: `application/json`
     * Authorization: `Bearer jwt`
 * Request Body: 
-    ```
+    ```JSON
     {
         "item_id": "2",
         "unit_id": "1",
@@ -69,7 +69,7 @@
     }
     ```
 * Response Body:
-    ```
+    ```JSON
     {
         "id": "1Zwd1U3MKH0bsOBOVWZ1aSiXcdf",
         "item_id": "2",
