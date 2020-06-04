@@ -30,10 +30,10 @@ func TestAllocation(t *testing.T) {
 	}()
 	database.ResetTestDB(db)
 
-	t.Run("Create", testCreateAllocation(&AllocationDatastore{DB: db}, &StockDataStore{DB: db}))
+	t.Run("Create", testCreateAllocation(&AllocationDatastore{DB: db}, &StockDataStore{DB: db}, &RequestDatastore{DB: db}))
 }
 
-func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore) func(t *testing.T) {
+func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore, requestRepo *RequestDatastore) func(t *testing.T) {
 	return func(t *testing.T) {
 		unit := &models.Unit{
 			ID:   testUnitID,
@@ -99,11 +99,12 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore) 
 		allocationData, err := repo.CreateAllocation(
 			context.Background(),
 			&models.Allocation{
-				AllocatorID:   user.ID,
-				RequestID: request.ID,
+				AllocatorID: user.ID,
+				RequestID:   request.ID,
 			},
 			allocationItems,
 			stockRepo,
+			requestRepo,
 		)
 		if err != nil {
 			t.Error(err)
@@ -126,11 +127,12 @@ func testCreateAllocation(repo *AllocationDatastore, stockRepo *StockDataStore) 
 		_, err = repo.CreateAllocation(
 			context.Background(),
 			&models.Allocation{
-				AllocatorID:   user.ID,
-				RequestID: request.ID,
+				AllocatorID: user.ID,
+				RequestID:   request.ID,
 			},
 			allocationItems,
 			stockRepo,
+			requestRepo,
 		)
 		if err == nil {
 			t.Error("Want create allocation error, got no error")

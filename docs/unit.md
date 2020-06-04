@@ -8,7 +8,7 @@
     * Authorization: `Bearer token`
 * Request Body: `-`
 * Response Body:
-    ```
+    ```JSON
     [
         {
             "id": "1",
@@ -26,13 +26,13 @@
     * Content-type: `application/json`
     * Authorization: `Bearer token`
 * Request Body:
-    ```
+    ```JSON
     {
         "name": "Meter"
     }
     ```
 * Response Body:
-    ```
+    ```JSON
     {
         "id": "1Zim6hXOmUTiH28xubzTz2kA0ed",
         "name": "Liter"

@@ -8,7 +8,7 @@
     * Authorization: `Bearer token`
 * Request Body: `-`
 * Response Body:
-    ```
+    ```JSON
     [
         {
             "id": "1",
@@ -30,13 +30,13 @@
     * Content-type: `application/json`
     * Authorization: `Bearer token`
 * Request Body:
-    ```
+    ```JSON
     {
         "name": "Masker"
     }
     ```
 * Response Body:
-    ```
+    ```JSON
     {
         "id": "1Zio8iFvaASndYT8wlcSEW5m91e",
         "name": "Masker"

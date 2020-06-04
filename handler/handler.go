@@ -32,7 +32,7 @@ func NewAPI(db *sql.DB) *API {
 	passwordResetRequestDatastore := &model.PasswordResetRequestDatastore{DB: db}
 
 	authResource := &AuthResource{
-		UserDatastore: userDatastore,
+		UserDatastore:                 userDatastore,
 		PasswordResetRequestDatastore: passwordResetRequestDatastore,
 	}
 	unitResource := &UnitResource{
@@ -41,7 +41,7 @@ func NewAPI(db *sql.DB) *API {
 	}
 	stockResource := &StockResource{
 		StockDataStore: stockDatastore,
-		UserDatastore: userDatastore,
+		UserDatastore:  userDatastore,
 	}
 	requestResource := &RequestResource{
 		requestDatastore: requestDatastore,
@@ -60,6 +60,7 @@ func NewAPI(db *sql.DB) *API {
 		AllocationDatastore: allocationDatastore,
 		StockDataStore:      stockDatastore,
 		UserDatastore:       userDatastore,
+		RequestDatastore:    requestDatastore,
 	}
 
 	api := &API{
