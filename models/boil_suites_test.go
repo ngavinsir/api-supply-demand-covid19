@@ -18,6 +18,7 @@ func TestParent(t *testing.T) {
 	t.Run("Donations", testDonations)
 	t.Run("Items", testItems)
 	t.Run("PasswordResetRequests", testPasswordResetRequests)
+	t.Run("RequestItemAllocations", testRequestItemAllocations)
 	t.Run("RequestItems", testRequestItems)
 	t.Run("Requests", testRequests)
 	t.Run("SchemaMigrations", testSchemaMigrations)
@@ -33,6 +34,7 @@ func TestDelete(t *testing.T) {
 	t.Run("Donations", testDonationsDelete)
 	t.Run("Items", testItemsDelete)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsDelete)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsDelete)
 	t.Run("RequestItems", testRequestItemsDelete)
 	t.Run("Requests", testRequestsDelete)
 	t.Run("SchemaMigrations", testSchemaMigrationsDelete)
@@ -48,6 +50,7 @@ func TestQueryDeleteAll(t *testing.T) {
 	t.Run("Donations", testDonationsQueryDeleteAll)
 	t.Run("Items", testItemsQueryDeleteAll)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsQueryDeleteAll)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsQueryDeleteAll)
 	t.Run("RequestItems", testRequestItemsQueryDeleteAll)
 	t.Run("Requests", testRequestsQueryDeleteAll)
 	t.Run("SchemaMigrations", testSchemaMigrationsQueryDeleteAll)
@@ -63,6 +66,7 @@ func TestSliceDeleteAll(t *testing.T) {
 	t.Run("Donations", testDonationsSliceDeleteAll)
 	t.Run("Items", testItemsSliceDeleteAll)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsSliceDeleteAll)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsSliceDeleteAll)
 	t.Run("RequestItems", testRequestItemsSliceDeleteAll)
 	t.Run("Requests", testRequestsSliceDeleteAll)
 	t.Run("SchemaMigrations", testSchemaMigrationsSliceDeleteAll)
@@ -78,6 +82,7 @@ func TestExists(t *testing.T) {
 	t.Run("Donations", testDonationsExists)
 	t.Run("Items", testItemsExists)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsExists)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsExists)
 	t.Run("RequestItems", testRequestItemsExists)
 	t.Run("Requests", testRequestsExists)
 	t.Run("SchemaMigrations", testSchemaMigrationsExists)
@@ -93,6 +98,7 @@ func TestFind(t *testing.T) {
 	t.Run("Donations", testDonationsFind)
 	t.Run("Items", testItemsFind)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsFind)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsFind)
 	t.Run("RequestItems", testRequestItemsFind)
 	t.Run("Requests", testRequestsFind)
 	t.Run("SchemaMigrations", testSchemaMigrationsFind)
@@ -108,6 +114,7 @@ func TestBind(t *testing.T) {
 	t.Run("Donations", testDonationsBind)
 	t.Run("Items", testItemsBind)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsBind)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsBind)
 	t.Run("RequestItems", testRequestItemsBind)
 	t.Run("Requests", testRequestsBind)
 	t.Run("SchemaMigrations", testSchemaMigrationsBind)
@@ -123,6 +130,7 @@ func TestOne(t *testing.T) {
 	t.Run("Donations", testDonationsOne)
 	t.Run("Items", testItemsOne)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsOne)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsOne)
 	t.Run("RequestItems", testRequestItemsOne)
 	t.Run("Requests", testRequestsOne)
 	t.Run("SchemaMigrations", testSchemaMigrationsOne)
@@ -138,6 +146,7 @@ func TestAll(t *testing.T) {
 	t.Run("Donations", testDonationsAll)
 	t.Run("Items", testItemsAll)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsAll)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsAll)
 	t.Run("RequestItems", testRequestItemsAll)
 	t.Run("Requests", testRequestsAll)
 	t.Run("SchemaMigrations", testSchemaMigrationsAll)
@@ -153,6 +162,7 @@ func TestCount(t *testing.T) {
 	t.Run("Donations", testDonationsCount)
 	t.Run("Items", testItemsCount)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsCount)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsCount)
 	t.Run("RequestItems", testRequestItemsCount)
 	t.Run("Requests", testRequestsCount)
 	t.Run("SchemaMigrations", testSchemaMigrationsCount)
@@ -168,6 +178,7 @@ func TestHooks(t *testing.T) {
 	t.Run("Donations", testDonationsHooks)
 	t.Run("Items", testItemsHooks)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsHooks)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsHooks)
 	t.Run("RequestItems", testRequestItemsHooks)
 	t.Run("Requests", testRequestsHooks)
 	t.Run("SchemaMigrations", testSchemaMigrationsHooks)
@@ -189,6 +200,8 @@ func TestInsert(t *testing.T) {
 	t.Run("Items", testItemsInsertWhitelist)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsInsert)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsInsertWhitelist)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsInsert)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsInsertWhitelist)
 	t.Run("RequestItems", testRequestItemsInsert)
 	t.Run("RequestItems", testRequestItemsInsertWhitelist)
 	t.Run("Requests", testRequestsInsert)
@@ -216,6 +229,7 @@ func TestToOne(t *testing.T) {
 	t.Run("DonationItemToUnitUsingUnit", testDonationItemToOneUnitUsingUnit)
 	t.Run("DonationToUserUsingDonator", testDonationToOneUserUsingDonator)
 	t.Run("PasswordResetRequestToUserUsingUser", testPasswordResetRequestToOneUserUsingUser)
+	t.Run("RequestItemAllocationToRequestItemUsingRequestItem", testRequestItemAllocationToOneRequestItemUsingRequestItem)
 	t.Run("RequestItemToItemUsingItem", testRequestItemToOneItemUsingItem)
 	t.Run("RequestItemToRequestUsingRequest", testRequestItemToOneRequestUsingRequest)
 	t.Run("RequestItemToUnitUsingUnit", testRequestItemToOneUnitUsingUnit)
@@ -226,7 +240,9 @@ func TestToOne(t *testing.T) {
 
 // TestOneToOne tests cannot be run in parallel
 // or deadlocks can occur.
-func TestOneToOne(t *testing.T) {}
+func TestOneToOne(t *testing.T) {
+	t.Run("RequestItemToRequestItemAllocationUsingRequestItemAllocation", testRequestItemOneToOneRequestItemAllocationUsingRequestItemAllocation)
+}
 
 // TestToMany tests cannot be run in parallel
 // or deadlocks can occur.
@@ -262,6 +278,7 @@ func TestToOneSet(t *testing.T) {
 	t.Run("DonationItemToUnitUsingDonationItems", testDonationItemToOneSetOpUnitUsingUnit)
 	t.Run("DonationToUserUsingDonatorDonations", testDonationToOneSetOpUserUsingDonator)
 	t.Run("PasswordResetRequestToUserUsingPasswordResetRequests", testPasswordResetRequestToOneSetOpUserUsingUser)
+	t.Run("RequestItemAllocationToRequestItemUsingRequestItemAllocation", testRequestItemAllocationToOneSetOpRequestItemUsingRequestItem)
 	t.Run("RequestItemToItemUsingRequestItems", testRequestItemToOneSetOpItemUsingItem)
 	t.Run("RequestItemToRequestUsingRequestItems", testRequestItemToOneSetOpRequestUsingRequest)
 	t.Run("RequestItemToUnitUsingRequestItems", testRequestItemToOneSetOpUnitUsingUnit)
@@ -276,7 +293,9 @@ func TestToOneRemove(t *testing.T) {}
 
 // TestOneToOneSet tests cannot be run in parallel
 // or deadlocks can occur.
-func TestOneToOneSet(t *testing.T) {}
+func TestOneToOneSet(t *testing.T) {
+	t.Run("RequestItemToRequestItemAllocationUsingRequestItemAllocation", testRequestItemOneToOneSetOpRequestItemAllocationUsingRequestItemAllocation)
+}
 
 // TestOneToOneRemove tests cannot be run in parallel
 // or deadlocks can occur.
@@ -318,6 +337,7 @@ func TestReload(t *testing.T) {
 	t.Run("Donations", testDonationsReload)
 	t.Run("Items", testItemsReload)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsReload)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsReload)
 	t.Run("RequestItems", testRequestItemsReload)
 	t.Run("Requests", testRequestsReload)
 	t.Run("SchemaMigrations", testSchemaMigrationsReload)
@@ -333,6 +353,7 @@ func TestReloadAll(t *testing.T) {
 	t.Run("Donations", testDonationsReloadAll)
 	t.Run("Items", testItemsReloadAll)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsReloadAll)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsReloadAll)
 	t.Run("RequestItems", testRequestItemsReloadAll)
 	t.Run("Requests", testRequestsReloadAll)
 	t.Run("SchemaMigrations", testSchemaMigrationsReloadAll)
@@ -348,6 +369,7 @@ func TestSelect(t *testing.T) {
 	t.Run("Donations", testDonationsSelect)
 	t.Run("Items", testItemsSelect)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsSelect)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsSelect)
 	t.Run("RequestItems", testRequestItemsSelect)
 	t.Run("Requests", testRequestsSelect)
 	t.Run("SchemaMigrations", testSchemaMigrationsSelect)
@@ -363,6 +385,7 @@ func TestUpdate(t *testing.T) {
 	t.Run("Donations", testDonationsUpdate)
 	t.Run("Items", testItemsUpdate)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsUpdate)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsUpdate)
 	t.Run("RequestItems", testRequestItemsUpdate)
 	t.Run("Requests", testRequestsUpdate)
 	t.Run("SchemaMigrations", testSchemaMigrationsUpdate)
@@ -378,6 +401,7 @@ func TestSliceUpdateAll(t *testing.T) {
 	t.Run("Donations", testDonationsSliceUpdateAll)
 	t.Run("Items", testItemsSliceUpdateAll)
 	t.Run("PasswordResetRequests", testPasswordResetRequestsSliceUpdateAll)
+	t.Run("RequestItemAllocations", testRequestItemAllocationsSliceUpdateAll)
 	t.Run("RequestItems", testRequestItemsSliceUpdateAll)
 	t.Run("Requests", testRequestsSliceUpdateAll)
 	t.Run("SchemaMigrations", testSchemaMigrationsSliceUpdateAll)

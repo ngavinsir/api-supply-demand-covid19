@@ -18,6 +18,8 @@ func TestUpsert(t *testing.T) {
 
 	t.Run("PasswordResetRequests", testPasswordResetRequestsUpsert)
 
+	t.Run("RequestItemAllocations", testRequestItemAllocationsUpsert)
+
 	t.Run("RequestItems", testRequestItemsUpsert)
 
 	t.Run("Requests", testRequestsUpsert)

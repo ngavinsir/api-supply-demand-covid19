@@ -87,7 +87,13 @@
                             "id":"2",
                             "name":"Liter"
                         },
-                        "quantity": "22.13"
+                        "quantity": "22.13",
+                        "allocation": {
+                            "id": "1eaO1SxYUb2udiRHPSbNy6xiEF8",
+                            "request_item_id": "1dDLbLEoz3jvd9rlxDdGoXPg3Md",
+                            "allocation_date": "2020-07-12T12:13:41.455385Z",
+                            "description": "sudah"
+                        }
                     },
                     {
                         "id": "1Zw6eKbga0OzptlUPa8UgcXIGfN",
@@ -192,7 +198,13 @@
                         "id":"2",
                         "name":"Liter"
                     },
-                    "quantity": "22.13"
+                    "quantity": "22.13",
+                    "allocation": {
+                        "id": "1eaO1SxYUb2udiRHPSbNy6xiEF8",
+                        "request_item_id": "1dDLbLEoz3jvd9rlxDdGoXPg3Md",
+                        "allocation_date": "2020-07-12T12:13:41.455385Z",
+                        "description": "sudah"
+                    }
                 },
                 {
                     "id": "1Zw6eKbga0OzptlUPa8UgcXIGfN",
@@ -246,7 +258,13 @@
                             "id":"1",
                             "name":"Buah"
                         },
-                        "quantity": "2.50"
+                        "quantity": "2.50",
+                        "allocation": {
+                            "id": "1eaO1SxYUb2udiRHPSbNy6xiEF8",
+                            "request_item_id": "1dDLbLEoz3jvd9rlxDdGoXPg3Md",
+                            "allocation_date": "2020-07-12T12:13:41.455385Z",
+                            "description": "sudah"
+                        }
                     }
                 ]
             }
@@ -263,6 +281,66 @@
 # Delete Request
 
 * Endpoint: `/api/v1/requests/{requestID}`
+* HTTP Method: `DELETE`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body: `-`
+* Response Body: `-`
+
+# Create Request Item Allocation
+
+* Endpoint: `/api/v1/requests/items/{requestItemID}/allocation`
+* HTTP Method: `POST`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body:
+    ```JSON
+    {
+        "description": "sudah",
+        "date": "2020-04-14T08:55:30Z"
+    }
+    ```
+* Response Body:
+    ```JSON
+    {
+        "id": "1eaKh2FOCKy5c5qiZiLWM6HnSC5",
+        "request_item_id": "1dL1l6fxEwp4rdplE3eM9JQZdpT",
+        "allocation_date": "2020-07-12T18:46:18.888407556+07:00",
+        "description": "sudah"
+    }
+    ```
+
+# Edit Request Item Allocation
+
+* Endpoint: `/api/v1/requests/items/{requestItemID}/allocation/{requestItemAllocationID}`
+* HTTP Method: `PUT`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body:
+    ```JSON
+    {
+        "description": "sudahselesai2" 
+    }
+    ```
+* Response Body:
+    ```JSON
+    {
+        "id": "1eaKh2FOCKy5c5qiZiLWM6HnSC5",
+        "request_item_id": "1dL1l6fxEwp4rdplE3eM9JQZdpT",
+        "allocation_date": "2020-07-12T11:55:41.50752Z",
+        "description": "sudahselesai2"
+    }
+    ```
+
+# Delete Request Item Allocation
+
+* Endpoint: `/api/v1/requests/items/{requestItemID}/allocation/{requestItemAllocationID}`
 * HTTP Method: `DELETE`
 * Request Header:
     * Accept: `application/json`

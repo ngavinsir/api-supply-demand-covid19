@@ -232,6 +232,7 @@ func (db *RequestDatastore) GetAllRequest(ctx context.Context, offset int, limit
 	requests, err := models.Requests(
 		Load("RequestItems.Item"),
 		Load("RequestItems.Unit"),
+		Load(Rels(models.RequestRels.RequestItems, models.RequestItemRels.RequestItemAllocation)),
 		Load(models.RequestRels.DonationApplicant),
 		Offset(offset),
 		Limit(limit),
@@ -247,10 +248,11 @@ func (db *RequestDatastore) GetAllRequest(ctx context.Context, offset int, limit
 		var requestItems []*RequestItemData
 		for _, item := range r.R.RequestItems {
 			requestItems = append(requestItems, &RequestItemData{
-				ID:       item.ID,
-				Item:     item.R.Item,
-				Unit:     item.R.Unit,
-				Quantity: item.Quantity,
+				ID:         item.ID,
+				Item:       item.R.Item,
+				Unit:       item.R.Unit,
+				Quantity:   item.Quantity,
+				Allocation: item.R.RequestItemAllocation,
 			})
 		}
 
@@ -272,6 +274,7 @@ func (db *RequestDatastore) GetUserRequests(ctx context.Context, userID string, 
 		models.RequestWhere.DonationApplicantID.EQ(userID),
 		Load("RequestItems.Item"),
 		Load("RequestItems.Unit"),
+		Load(Rels(models.RequestRels.RequestItems, models.RequestItemRels.RequestItemAllocation)),
 		Load(models.RequestRels.DonationApplicant),
 		Offset(offset),
 		Limit(limit),
@@ -287,10 +290,11 @@ func (db *RequestDatastore) GetUserRequests(ctx context.Context, userID string, 
 		var requestItems []*RequestItemData
 		for _, item := range r.R.RequestItems {
 			requestItems = append(requestItems, &RequestItemData{
-				ID:       item.ID,
-				Item:     item.R.Item,
-				Unit:     item.R.Unit,
-				Quantity: item.Quantity,
+				ID:         item.ID,
+				Item:       item.R.Item,
+				Unit:       item.R.Unit,
+				Quantity:   item.Quantity,
+				Allocation: item.R.RequestItemAllocation,
 			})
 		}
 
@@ -346,12 +350,14 @@ func (db *RequestDatastore) GetRequest(
 	for _, item := range request.R.RequestItems {
 		item.L.LoadItem(ctx, db, true, item, nil)
 		item.L.LoadUnit(ctx, db, true, item, nil)
+		item.L.LoadRequestItemAllocation(ctx, db, true, item, nil)
 
 		requestItemData := &RequestItemData{
-			ID:       item.ID,
-			Item:     item.R.Item,
-			Unit:     item.R.Unit,
-			Quantity: item.Quantity,
+			ID:         item.ID,
+			Item:       item.R.Item,
+			Unit:       item.R.Unit,
+			Quantity:   item.Quantity,
+			Allocation: item.R.RequestItemAllocation,
 		}
 
 		requestItems = append(requestItems, requestItemData)
@@ -401,9 +407,10 @@ type RequestData struct {
 
 // RequestItemData struct.
 type RequestItemData struct {
-	ID        string        `boil:"id" json:"id" toml:"id" yaml:"id"`
-	Item      *models.Item  `boil:"item" json:"item" toml:"item" yaml:"item"`
-	Unit      *models.Unit  `boil:"unit" json:"unit" toml:"unit" yaml:"unit"`
-	Quantity  types.Decimal `boil:"quantity" json:"quantity" toml:"quantity" yaml:"quantity"`
-	RequestID string        `boil:"request_id" json:"request_id,omitempty" toml:"request_id" yaml:"request_id"`
+	ID         string                        `boil:"id" json:"id" toml:"id" yaml:"id"`
+	Item       *models.Item                  `boil:"item" json:"item" toml:"item" yaml:"item"`
+	Unit       *models.Unit                  `boil:"unit" json:"unit" toml:"unit" yaml:"unit"`
+	Quantity   types.Decimal                 `boil:"quantity" json:"quantity" toml:"quantity" yaml:"quantity"`
+	RequestID  string                        `boil:"request_id" json:"request_id,omitempty" toml:"request_id" yaml:"request_id"`
+	Allocation *models.RequestItemAllocation `json:"allocation,omitempty"`
 }

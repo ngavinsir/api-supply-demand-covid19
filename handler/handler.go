@@ -30,6 +30,7 @@ func NewAPI(db *sql.DB) *API {
 	donationDatastore := &model.DonationDataStore{DB: db}
 	allocationDatastore := &model.AllocationDatastore{DB: db}
 	passwordResetRequestDatastore := &model.PasswordResetRequestDatastore{DB: db}
+	requestItemAllocationDatastore := &model.RequestItemAllocationDatastore{DB: db}
 
 	authResource := &AuthResource{
 		UserDatastore:                 userDatastore,
@@ -44,8 +45,9 @@ func NewAPI(db *sql.DB) *API {
 		UserDatastore:  userDatastore,
 	}
 	requestResource := &RequestResource{
-		RequestDatastore: requestDatastore,
-		UserDatastore:    userDatastore,
+		RequestDatastore:               requestDatastore,
+		UserDatastore:                  userDatastore,
+		RequestItemAllocationDatastore: requestItemAllocationDatastore,
 	}
 	itemResource := &ItemResource{
 		ItemDatastore: itemDatastore,

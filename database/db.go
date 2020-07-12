@@ -14,7 +14,7 @@ import (
 
 // InitDB opens new db connection.
 func InitDB() (*sql.DB, error) {
-	conn := "postgresql://postgres:postgres@localhost:6543/postgres?sslmode=disable"
+	conn := "postgresql://postgres:postgres@localhost:6543/db_supply_demand_covid19?sslmode=disable"
 	if envConn := os.Getenv("DATABASE_URL"); envConn != "" {
 		conn = envConn
 	}
