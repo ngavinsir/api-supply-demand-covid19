@@ -33,6 +33,7 @@ func (res *RequestResource) router() *chi.Mux {
 		r.Put("/{requestID}", UpdateRequest(res))
 		r.Delete("/{requestID}", DeleteRequest(res))
 		r.Post("/items/{requestItemID}/allocation", CreateRequestItemAllocation(res))
+		r.Put("/items/{requestItemID}/allocation/{requestItemAllocationID}", EditRequestItemAllocation(res))
 	})
 
 	return r
@@ -191,6 +192,12 @@ func CreateRequestItemAllocation(repo interface {
 	model.HasCreateRequestItemAllocation
 }) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
 		requestItemID := chi.URLParam(r, "requestItemID")
 		if requestItemID == "" {
 			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
@@ -207,6 +214,50 @@ func CreateRequestItemAllocation(repo interface {
 			r.Context(),
 			data.Date,
 			requestItemID,
+			data.Description,
+		)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+
+		render.JSON(w, r, requestItemAllocation)
+	}
+}
+
+// EditRequestItemAllocation edit RequestItemAllocation
+func EditRequestItemAllocation(repo interface {
+	model.HasEditRequestItemAllocation
+}) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
+		requestItemID := chi.URLParam(r, "requestItemID")
+		if requestItemID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		requestItemAllocationID := chi.URLParam(r, "requestItemAllocationID")
+		if requestItemAllocationID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		data := &editRequestItemAllocationRequest{}
+		if err := render.Bind(r, data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		requestItemAllocation, err := repo.EditRequestItemAllocation(
+			r.Context(),
+			requestItemAllocationID,
+			data.Date,
 			data.Description,
 		)
 		if err != nil {
@@ -264,6 +315,15 @@ func (req *createRequestItemAllocationRequest) Bind(r *http.Request) error {
 	if req.Date.IsZero() {
 		req.Date = time.Now()
 	}
+	return nil
+}
+
+type editRequestItemAllocationRequest struct {
+	Description string    `json:"description"`
+	Date        time.Time `json:"allocationDate"`
+}
+
+func (req *editRequestItemAllocationRequest) Bind(r *http.Request) error {
 	return nil
 }
 

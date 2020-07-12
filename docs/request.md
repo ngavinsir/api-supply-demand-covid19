@@ -295,3 +295,27 @@
         "description": "sudah"
     }
     ```
+
+# Edit Request Item Allocation
+
+* Endpoint: `/api/v1/requests/items/{requestItemID}/allocation/{requestItemAllocationID}`
+* HTTP Method: `PUT`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body:
+    ```JSON
+    {
+        "description": "sudahselesai2" 
+    }
+    ```
+* Response Body:
+    ```JSON
+    {
+        "id": "1eaKh2FOCKy5c5qiZiLWM6HnSC5",
+        "request_item_id": "1dL1l6fxEwp4rdplE3eM9JQZdpT",
+        "allocation_date": "2020-07-12T11:55:41.50752Z",
+        "description": "sudahselesai2"
+    }
+    ```

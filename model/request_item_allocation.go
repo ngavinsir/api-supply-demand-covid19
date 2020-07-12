@@ -80,7 +80,9 @@ func (db *RequestItemAllocationDatastore) EditRequestItemAllocation(
 	}
 
 	requestItemAllocation.Description = null.StringFrom(description)
-	requestItemAllocation.AllocationDate = allocationDate
+	if !allocationDate.IsZero() {
+		requestItemAllocation.AllocationDate = allocationDate
+	}
 
 	if _, err = requestItemAllocation.Update(ctx, db, boil.Infer()); err != nil {
 		return nil, err
