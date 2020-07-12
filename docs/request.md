@@ -87,7 +87,13 @@
                             "id":"2",
                             "name":"Liter"
                         },
-                        "quantity": "22.13"
+                        "quantity": "22.13",
+                        "allocation": {
+                            "id": "1eaO1SxYUb2udiRHPSbNy6xiEF8",
+                            "request_item_id": "1dDLbLEoz3jvd9rlxDdGoXPg3Md",
+                            "allocation_date": "2020-07-12T12:13:41.455385Z",
+                            "description": "sudah"
+                        }
                     },
                     {
                         "id": "1Zw6eKbga0OzptlUPa8UgcXIGfN",
@@ -192,7 +198,13 @@
                         "id":"2",
                         "name":"Liter"
                     },
-                    "quantity": "22.13"
+                    "quantity": "22.13",
+                    "allocation": {
+                        "id": "1eaO1SxYUb2udiRHPSbNy6xiEF8",
+                        "request_item_id": "1dDLbLEoz3jvd9rlxDdGoXPg3Md",
+                        "allocation_date": "2020-07-12T12:13:41.455385Z",
+                        "description": "sudah"
+                    }
                 },
                 {
                     "id": "1Zw6eKbga0OzptlUPa8UgcXIGfN",
@@ -246,7 +258,13 @@
                             "id":"1",
                             "name":"Buah"
                         },
-                        "quantity": "2.50"
+                        "quantity": "2.50",
+                        "allocation": {
+                            "id": "1eaO1SxYUb2udiRHPSbNy6xiEF8",
+                            "request_item_id": "1dDLbLEoz3jvd9rlxDdGoXPg3Md",
+                            "allocation_date": "2020-07-12T12:13:41.455385Z",
+                            "description": "sudah"
+                        }
                     }
                 ]
             }
