@@ -319,3 +319,14 @@
         "description": "sudahselesai2"
     }
     ```
+
+# Delete Request Item Allocation
+
+* Endpoint: `/api/v1/requests/items/{requestItemID}/allocation/{requestItemAllocationID}`
+* HTTP Method: `DELETE`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body: `-`
+* Response Body: `-`

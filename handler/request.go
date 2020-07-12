@@ -34,6 +34,7 @@ func (res *RequestResource) router() *chi.Mux {
 		r.Delete("/{requestID}", DeleteRequest(res))
 		r.Post("/items/{requestItemID}/allocation", CreateRequestItemAllocation(res))
 		r.Put("/items/{requestItemID}/allocation/{requestItemAllocationID}", EditRequestItemAllocation(res))
+		r.Delete("/items/{requestItemID}/allocation/{requestItemAllocationID}", DeleteRequestItemAllocation(res))
 	})
 
 	return r
@@ -266,6 +267,36 @@ func EditRequestItemAllocation(repo interface {
 		}
 
 		render.JSON(w, r, requestItemAllocation)
+	}
+}
+
+// DeleteRequestItemAllocation delete RequestItemAllocation
+func DeleteRequestItemAllocation(repo interface {
+	model.HasDeleteRequestItemAllocation
+}) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, _ := r.Context().Value(UserCtxKey).(*models.User)
+		if user.Role != model.RoleAdmin {
+			render.Render(w, r, ErrUnauthorized(ErrInvalidRole))
+			return
+		}
+
+		requestItemID := chi.URLParam(r, "requestItemID")
+		if requestItemID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		requestItemAllocationID := chi.URLParam(r, "requestItemAllocationID")
+		if requestItemAllocationID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		if err := repo.DeleteRequestItemAllocation(r.Context(), requestItemAllocationID); err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
 	}
 }
 
