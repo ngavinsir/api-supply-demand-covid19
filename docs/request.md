@@ -270,3 +270,28 @@
     * Authorization: `Bearer token`
 * Request Body: `-`
 * Response Body: `-`
+
+# Create Request Item Allocation
+
+* Endpoint: `/api/v1/requests/items/{requestItemID}/allocation`
+* HTTP Method: `POST`
+* Request Header:
+    * Accept: `application/json`
+    * Content-type: `application/json`
+    * Authorization: `Bearer token`
+* Request Body:
+    ```JSON
+    {
+        "description": "sudah",
+        "date": "2020-04-14T08:55:30Z"
+    }
+    ```
+* Response Body:
+    ```JSON
+    {
+        "id": "1eaKh2FOCKy5c5qiZiLWM6HnSC5",
+        "request_item_id": "1dL1l6fxEwp4rdplE3eM9JQZdpT",
+        "allocation_date": "2020-07-12T18:46:18.888407556+07:00",
+        "description": "sudah"
+    }
+    ```

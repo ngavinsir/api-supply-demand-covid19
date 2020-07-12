@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/ericlagergren/decimal"
 	"github.com/go-chi/chi"
@@ -14,6 +15,7 @@ import (
 type RequestResource struct {
 	*model.RequestDatastore
 	*model.UserDatastore
+	*model.RequestItemAllocationDatastore
 }
 
 func (res *RequestResource) router() *chi.Mux {
@@ -30,6 +32,7 @@ func (res *RequestResource) router() *chi.Mux {
 		r.Post("/", CreateRequest(res))
 		r.Put("/{requestID}", UpdateRequest(res))
 		r.Delete("/{requestID}", DeleteRequest(res))
+		r.Post("/items/{requestItemID}/allocation", CreateRequestItemAllocation(res))
 	})
 
 	return r
@@ -183,6 +186,38 @@ func DeleteRequest(repo interface{ model.HasDeleteRequest }) http.HandlerFunc {
 	}
 }
 
+// CreateRequestItemAllocation create RequestItemAllocation
+func CreateRequestItemAllocation(repo interface {
+	model.HasCreateRequestItemAllocation
+}) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		requestItemID := chi.URLParam(r, "requestItemID")
+		if requestItemID == "" {
+			render.Render(w, r, ErrInvalidRequest(ErrMissingReqFields))
+			return
+		}
+
+		data := &createRequestItemAllocationRequest{}
+		if err := render.Bind(r, data); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		requestItemAllocation, err := repo.CreateRequestItemAllocation(
+			r.Context(),
+			data.Date,
+			requestItemID,
+			data.Description,
+		)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+
+		render.JSON(w, r, requestItemAllocation)
+	}
+}
+
 // CreateRequestRequest struct
 type CreateRequestRequest struct {
 	RequestItems models.RequestItemSlice `json:"requestItems"`
@@ -214,6 +249,21 @@ func (req *UpdateRequestRequest) Bind(r *http.Request) error {
 		}
 	}
 
+	return nil
+}
+
+type createRequestItemAllocationRequest struct {
+	Description string    `json:"description"`
+	Date        time.Time `json:"allocationDate"`
+}
+
+func (req *createRequestItemAllocationRequest) Bind(r *http.Request) error {
+	if req.Description == "" {
+		return ErrMissingReqFields
+	}
+	if req.Date.IsZero() {
+		req.Date = time.Now()
+	}
 	return nil
 }
 
