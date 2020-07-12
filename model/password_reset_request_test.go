@@ -18,7 +18,7 @@ func TestPasswordResetRequest(t *testing.T) {
 		database.ResetTestDB(db)
 		db.Close()
 	}()
-	
+
 	userDatastore := &UserDatastore{DB: db}
 	user, err := userDatastore.CreateNewUser(context.Background(), &models.User{
 		Email:    testUserEmail,
@@ -74,7 +74,7 @@ func testConfirmPasswordReset(repo *PasswordResetRequestDatastore, requestID str
 		if err = user.Reload(context.Background(), repo.DB); err != nil {
 			t.Error(err)
 		}
-		
+
 		if user.Password == oldPassword {
 			t.Error("Want user password changed, got old password")
 		}

@@ -494,6 +494,119 @@ func testRequestItemsInsertWhitelist(t *testing.T) {
 	}
 }
 
+func testRequestItemOneToOneRequestItemAllocationUsingRequestItemAllocation(t *testing.T) {
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var foreign RequestItemAllocation
+	var local RequestItem
+
+	seed := randomize.NewSeed()
+	if err := randomize.Struct(seed, &foreign, requestItemAllocationDBTypes, true, requestItemAllocationColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RequestItemAllocation struct: %s", err)
+	}
+	if err := randomize.Struct(seed, &local, requestItemDBTypes, true, requestItemColumnsWithDefault...); err != nil {
+		t.Errorf("Unable to randomize RequestItem struct: %s", err)
+	}
+
+	if err := local.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	foreign.RequestItemID = local.ID
+	if err := foreign.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	check, err := local.RequestItemAllocation().One(ctx, tx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if check.RequestItemID != foreign.RequestItemID {
+		t.Errorf("want: %v, got %v", foreign.RequestItemID, check.RequestItemID)
+	}
+
+	slice := RequestItemSlice{&local}
+	if err = local.L.LoadRequestItemAllocation(ctx, tx, false, (*[]*RequestItem)(&slice), nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.RequestItemAllocation == nil {
+		t.Error("struct should have been eager loaded")
+	}
+
+	local.R.RequestItemAllocation = nil
+	if err = local.L.LoadRequestItemAllocation(ctx, tx, true, &local, nil); err != nil {
+		t.Fatal(err)
+	}
+	if local.R.RequestItemAllocation == nil {
+		t.Error("struct should have been eager loaded")
+	}
+}
+
+func testRequestItemOneToOneSetOpRequestItemAllocationUsingRequestItemAllocation(t *testing.T) {
+	var err error
+
+	ctx := context.Background()
+	tx := MustTx(boil.BeginTx(ctx, nil))
+	defer func() { _ = tx.Rollback() }()
+
+	var a RequestItem
+	var b, c RequestItemAllocation
+
+	seed := randomize.NewSeed()
+	if err = randomize.Struct(seed, &a, requestItemDBTypes, false, strmangle.SetComplement(requestItemPrimaryKeyColumns, requestItemColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &b, requestItemAllocationDBTypes, false, strmangle.SetComplement(requestItemAllocationPrimaryKeyColumns, requestItemAllocationColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+	if err = randomize.Struct(seed, &c, requestItemAllocationDBTypes, false, strmangle.SetComplement(requestItemAllocationPrimaryKeyColumns, requestItemAllocationColumnsWithoutDefault)...); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := a.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+	if err = b.Insert(ctx, tx, boil.Infer()); err != nil {
+		t.Fatal(err)
+	}
+
+	for i, x := range []*RequestItemAllocation{&b, &c} {
+		err = a.SetRequestItemAllocation(ctx, tx, i != 0, x)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if a.R.RequestItemAllocation != x {
+			t.Error("relationship struct not set to correct value")
+		}
+		if x.R.RequestItem != &a {
+			t.Error("failed to append to foreign relationship struct")
+		}
+
+		if a.ID != x.RequestItemID {
+			t.Error("foreign key was wrong value", a.ID)
+		}
+
+		zero := reflect.Zero(reflect.TypeOf(x.RequestItemID))
+		reflect.Indirect(reflect.ValueOf(&x.RequestItemID)).Set(zero)
+
+		if err = x.Reload(ctx, tx); err != nil {
+			t.Fatal("failed to reload", err)
+		}
+
+		if a.ID != x.RequestItemID {
+			t.Error("foreign key was wrong value", a.ID, x.RequestItemID)
+		}
+
+		if _, err = x.Delete(ctx, tx); err != nil {
+			t.Fatal("failed to delete x", err)
+		}
+	}
+}
+
 func testRequestItemToOneItemUsingItem(t *testing.T) {
 	ctx := context.Background()
 	tx := MustTx(boil.BeginTx(ctx, nil))

@@ -14,7 +14,7 @@ import (
 
 // InitDB opens new db connection.
 func InitDB() (*sql.DB, error) {
-	conn := "postgresql://postgres:postgres@localhost:6543/postgres?sslmode=disable"
+	conn := "postgresql://postgres:postgres@localhost:6543/db_supply_demand_covid19?sslmode=disable"
 	if envConn := os.Getenv("DATABASE_URL"); envConn != "" {
 		conn = envConn
 	}
@@ -41,7 +41,7 @@ func connect(conn string, path string) (*sql.DB, error) {
 	return db, nil
 }
 
-func  execSchema(db *sql.DB, path string) error {
+func execSchema(db *sql.DB, path string) error {
 	if path == "" {
 		path = "file://migrations"
 	}
@@ -49,7 +49,7 @@ func  execSchema(db *sql.DB, path string) error {
 	if err != nil {
 		return err
 	}
-    m, err := migrate.NewWithDatabaseInstance(
+	m, err := migrate.NewWithDatabaseInstance(
 		path,
 		"postgres",
 		driver,
@@ -57,7 +57,7 @@ func  execSchema(db *sql.DB, path string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	m.Up()
 
 	return nil

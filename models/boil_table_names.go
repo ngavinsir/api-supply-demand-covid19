@@ -10,6 +10,7 @@ var TableNames = struct {
 	Donations             string
 	Items                 string
 	PasswordResetRequests string
+	RequestItemAllocation string
 	RequestItems          string
 	Requests              string
 	SchemaMigrations      string
@@ -23,6 +24,7 @@ var TableNames = struct {
 	Donations:             "donations",
 	Items:                 "items",
 	PasswordResetRequests: "password_reset_requests",
+	RequestItemAllocation: "request_item_allocation",
 	RequestItems:          "request_items",
 	Requests:              "requests",
 	SchemaMigrations:      "schema_migrations",

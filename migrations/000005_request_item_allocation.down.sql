@@ -1,0 +1,1 @@
+drop table if exists request_item_allocation;

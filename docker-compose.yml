@@ -5,6 +5,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
+      - POSTGRES_DB=db_supply_demand_covid19
     ports:
       - "6543:5432"
 

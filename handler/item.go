@@ -25,6 +25,7 @@ func (res *ItemResource) router() *chi.Mux {
 		r.Use(UserCtx(res.UserDatastore))
 
 		r.Post("/", CreateItem(res.ItemDatastore))
+
 		r.Delete("/{itemID}", DeleteItem(res.ItemDatastore))
 	})
 
