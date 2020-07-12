@@ -66,20 +66,23 @@ var RequestItemWhere = struct {
 
 // RequestItemRels is where relationship names are stored.
 var RequestItemRels = struct {
-	Item    string
-	Request string
-	Unit    string
+	Item                  string
+	Request               string
+	Unit                  string
+	RequestItemAllocation string
 }{
-	Item:    "Item",
-	Request: "Request",
-	Unit:    "Unit",
+	Item:                  "Item",
+	Request:               "Request",
+	Unit:                  "Unit",
+	RequestItemAllocation: "RequestItemAllocation",
 }
 
 // requestItemR is where relationships are stored.
 type requestItemR struct {
-	Item    *Item
-	Request *Request
-	Unit    *Unit
+	Item                  *Item
+	Request               *Request
+	Unit                  *Unit
+	RequestItemAllocation *RequestItemAllocation
 }
 
 // NewStruct creates a new relationship struct
@@ -414,6 +417,20 @@ func (o *RequestItem) Unit(mods ...qm.QueryMod) unitQuery {
 	return query
 }
 
+// RequestItemAllocation pointed to by the foreign key.
+func (o *RequestItem) RequestItemAllocation(mods ...qm.QueryMod) requestItemAllocationQuery {
+	queryMods := []qm.QueryMod{
+		qm.Where("\"request_item_id\" = ?", o.ID),
+	}
+
+	queryMods = append(queryMods, mods...)
+
+	query := RequestItemAllocations(queryMods...)
+	queries.SetFrom(query.Query, "\"request_item_allocation\"")
+
+	return query
+}
+
 // LoadItem allows an eager lookup of values, cached into the
 // loaded structs of the objects. This is for an N-1 relationship.
 func (requestItemL) LoadItem(ctx context.Context, e boil.ContextExecutor, singular bool, maybeRequestItem interface{}, mods queries.Applicator) error {
@@ -717,6 +734,104 @@ func (requestItemL) LoadUnit(ctx context.Context, e boil.ContextExecutor, singul
 	return nil
 }
 
+// LoadRequestItemAllocation allows an eager lookup of values, cached into the
+// loaded structs of the objects. This is for a 1-1 relationship.
+func (requestItemL) LoadRequestItemAllocation(ctx context.Context, e boil.ContextExecutor, singular bool, maybeRequestItem interface{}, mods queries.Applicator) error {
+	var slice []*RequestItem
+	var object *RequestItem
+
+	if singular {
+		object = maybeRequestItem.(*RequestItem)
+	} else {
+		slice = *maybeRequestItem.(*[]*RequestItem)
+	}
+
+	args := make([]interface{}, 0, 1)
+	if singular {
+		if object.R == nil {
+			object.R = &requestItemR{}
+		}
+		args = append(args, object.ID)
+	} else {
+	Outer:
+		for _, obj := range slice {
+			if obj.R == nil {
+				obj.R = &requestItemR{}
+			}
+
+			for _, a := range args {
+				if a == obj.ID {
+					continue Outer
+				}
+			}
+
+			args = append(args, obj.ID)
+		}
+	}
+
+	if len(args) == 0 {
+		return nil
+	}
+
+	query := NewQuery(qm.From(`request_item_allocation`), qm.WhereIn(`request_item_allocation.request_item_id in ?`, args...))
+	if mods != nil {
+		mods.Apply(query)
+	}
+
+	results, err := query.QueryContext(ctx, e)
+	if err != nil {
+		return errors.Wrap(err, "failed to eager load RequestItemAllocation")
+	}
+
+	var resultSlice []*RequestItemAllocation
+	if err = queries.Bind(results, &resultSlice); err != nil {
+		return errors.Wrap(err, "failed to bind eager loaded slice RequestItemAllocation")
+	}
+
+	if err = results.Close(); err != nil {
+		return errors.Wrap(err, "failed to close results of eager load for request_item_allocation")
+	}
+	if err = results.Err(); err != nil {
+		return errors.Wrap(err, "error occurred during iteration of eager loaded relations for request_item_allocation")
+	}
+
+	if len(requestItemAfterSelectHooks) != 0 {
+		for _, obj := range resultSlice {
+			if err := obj.doAfterSelectHooks(ctx, e); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(resultSlice) == 0 {
+		return nil
+	}
+
+	if singular {
+		foreign := resultSlice[0]
+		object.R.RequestItemAllocation = foreign
+		if foreign.R == nil {
+			foreign.R = &requestItemAllocationR{}
+		}
+		foreign.R.RequestItem = object
+	}
+
+	for _, local := range slice {
+		for _, foreign := range resultSlice {
+			if local.ID == foreign.RequestItemID {
+				local.R.RequestItemAllocation = foreign
+				if foreign.R == nil {
+					foreign.R = &requestItemAllocationR{}
+				}
+				foreign.R.RequestItem = local
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // SetItem of the requestItem to the related item.
 // Sets o.R.Item to related.
 // Adds o to related.R.RequestItems.
@@ -855,6 +970,57 @@ func (o *RequestItem) SetUnit(ctx context.Context, exec boil.ContextExecutor, in
 		related.R.RequestItems = append(related.R.RequestItems, o)
 	}
 
+	return nil
+}
+
+// SetRequestItemAllocation of the requestItem to the related item.
+// Sets o.R.RequestItemAllocation to related.
+// Adds o to related.R.RequestItem.
+func (o *RequestItem) SetRequestItemAllocation(ctx context.Context, exec boil.ContextExecutor, insert bool, related *RequestItemAllocation) error {
+	var err error
+
+	if insert {
+		related.RequestItemID = o.ID
+
+		if err = related.Insert(ctx, exec, boil.Infer()); err != nil {
+			return errors.Wrap(err, "failed to insert into foreign table")
+		}
+	} else {
+		updateQuery := fmt.Sprintf(
+			"UPDATE \"request_item_allocation\" SET %s WHERE %s",
+			strmangle.SetParamNames("\"", "\"", 1, []string{"request_item_id"}),
+			strmangle.WhereClause("\"", "\"", 2, requestItemAllocationPrimaryKeyColumns),
+		)
+		values := []interface{}{o.ID, related.ID}
+
+		if boil.IsDebug(ctx) {
+			writer := boil.DebugWriterFrom(ctx)
+			fmt.Fprintln(writer, updateQuery)
+			fmt.Fprintln(writer, values)
+		}
+		if _, err = exec.ExecContext(ctx, updateQuery, values...); err != nil {
+			return errors.Wrap(err, "failed to update foreign table")
+		}
+
+		related.RequestItemID = o.ID
+
+	}
+
+	if o.R == nil {
+		o.R = &requestItemR{
+			RequestItemAllocation: related,
+		}
+	} else {
+		o.R.RequestItemAllocation = related
+	}
+
+	if related.R == nil {
+		related.R = &requestItemAllocationR{
+			RequestItem: o,
+		}
+	} else {
+		related.R.RequestItem = o
+	}
 	return nil
 }
 
